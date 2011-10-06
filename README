@@ -4,8 +4,8 @@ Shen is modern rapidly developing programming language (more preciesely -
 metalanguage) created by Dr. Mark Tarver for all modern platforms (Python, 
 JavaScript, Scheme, Common Lisp and many others).
 It combines functional programming, pattern-matching, compiler-compiler, 
-declarative programming (almost one-to-one as in prolog) and most powerful 
-type system in one single, comact and crossplatform core.
+declarative programming (almost one-to-one as in prolog) the most powerful 
+type system in one single, and a compact and crossplatform core.
 You may found more inforamtion about it on site http://www.lambdassociates.org
 
 If you want to share your code with other Shen users then write to 
