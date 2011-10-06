@@ -52,7 +52,7 @@ accessors:
   X : symbol; Y : symbol;
   =======================
   [X Y] : slot;
-  
+
   X : slot;
   __________________
   (head X) : symbol;)
@@ -97,7 +97,7 @@ accessors:
                         [A : Type;
                          _______________________
                          [<-vector A I] : Stype;
-                           
+
                          A : Type; B : Stype;
                          _______________________
                          [vector-> A I B] : Type;
@@ -115,18 +115,11 @@ accessors:
                                  Slots
                                  [(sym-capitalize Name) : Type; | Acc]))
 
-(define slots-datatype-names
-  {(list slot) --> (list symbol) --> (list symbol)}
-  [] Acc -> (reverse Acc)
-  [[Name Type] | Slots] Acc -> (slots-datatype-names
-                                 Slots
-                                 [(sym-capitalize Name) | Acc]))
-
 (define datatypes
   Type Slots -> (let Names (map (/. X (sym-capitalize (head X))) Slots)
                      Defs (slots-defs Slots [])
                      Types (slots-types Type Slots 1 [])
-                  (append [datatype Type] 
+                  (append [datatype Type]
                           Defs
                           [_________
                             (append [@v | Names] [[vector 0]]) : Type;
@@ -162,7 +155,7 @@ accessors:
   {symbol --> (list slot) --> ast}
   Type [] Acc -> (reverse [} Type --> | Acc])
   Type [[Sname Stype] | Slots] [] -> (constructor-type Type Slots [Stype {])
-  Type [[Sname Stype] | Slots] Acc -> 
+  Type [[Sname Stype] | Slots] Acc ->
     (constructor-type Type Slots [Stype --> | Acc]))
 
 (define constr-init
@@ -177,6 +170,9 @@ accessors:
                   (append [define Constr] Types Names [-> Init])))
 
 (define struct-aux
+  Name Slots -> (error "Structure name must be a symbol.")
+                where (not (symbol? Name))
+  Name [] -> (error "At least one slot must be defined in a structure.")
   Name Slots -> (append [(datatypes Name Slots) (constructor Name Slots)]
                         (setters Name Slots 1 [])
                         (accessors Name Slots 1 [])))
