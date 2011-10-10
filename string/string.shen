@@ -25,6 +25,7 @@
  *
  *** Code:
  *\
+(load "../sequence/sequence.shen")
 
 (define takestr
   \* return the n-length prefix of string *\
@@ -90,7 +91,7 @@
 
 (define split-
   {string --> string --> string --> [string] --> [string]}
-  _ "" Holder Acc -> (append Acc [Holder])
+  _ "" Holder Acc -> (append (reverse Acc) [Holder])
   S T  Holder Acc -> (if (starts-with T S)
                          (split- S (dropstr (lengthstr S) T) "" [Holder|Acc])
                          (split- S (tlstr T) (@s Holder (pos T 0)) Acc)))
