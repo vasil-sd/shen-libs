@@ -59,9 +59,15 @@
   X X -> [X]
   X Y -> [X|(range (if (> X Y) (- X 1) (+ X 1)) Y)])
 
+(datatype nested
+  ____________
+  A : nested;
+  ___________________
+  [A] : nested;)
+
 (define flatten
   \* flatten a list of elements *\
-  {[A] --> [B]}
+  {nested --> nested}
   [] -> []
   [A|AS] -> (if (cons? A)
                 (flatten (append A AS))
@@ -81,36 +87,36 @@
   Fn -> (/. A (not (Fn A))))
 
 (define seperate
-  \* return the tuple: (@p (filter Fn [A]) (filter (complement Fn) [A])) *\
-  {(A --> boolean) --> [A] --> [[A]]}
+  \* seperate a list into those that do and don't satisfy a boolean function *\
+  {(A --> boolean) --> [A] --> ([A] * [A])}
   Fn AS -> (@p (filter Fn AS) (filter (complement Fn) AS)))
 
 (define zip
   \* combine two lists returning a list of tuples of their elements *\
-  {[A] --> [B] --> [(@p A B)]}
+  {[A] --> [B] --> [(A * B)]}
   _ [] -> []
   [] _ -> []
   [A|AS] [B|BS] -> [(@p A B)|(zip AS BS)])
 
-(define indexed
-  \* return an indexed version of a list *\
-  {[A] --> [(@p number A)]}
-  AS -> (indexed- 0 AS))
-
 (define indexed-
-  {number -> [A] -> [(@p number A)]}
+  {number --> [A] --> [(number * A)]}
   _ [] -> []
   N [A|AS] -> [(@p N A)|(indexed- (+ N 1) AS)])
 
+(define indexed
+  \* return an indexed version of a list *\
+  {[A] --> [(number * A)]}
+  AS -> (indexed- 0 AS))
+
 (define reduce
   \* reduce a functoin over a list *\
-  {(A --> B --> B) --> [A] --> B --> B}
+  {(A --> B --> B) --> B --> [A] --> B}
   Fn B [A] -> (Fn A B)
   Fn B [A|AS] -> (reduce Fn (Fn A B) AS))
 
 (define mapcon
   \* like map but concatenate the results *\
-  {(A --> B) --> [A] --> [B]}
+  {(A --> [B]) --> [A] --> [B]}
   _ [] -> []
   Fn [A|AS] -> (append (Fn A) (mapcon Fn AS)))
 
@@ -122,16 +128,11 @@
 
 (define partition-with
   \* partition into sublists every time a function returns a new value *\
-  {(Fn --> A --> B) --> [[A]]}
+  {(Fn --> A --> B) --> [A] -->  [[A]]}
   _ [] -> []
   Fn [A|AS] -> (let Touchstone (Fn A)
                     Head (cons A (take-while (/. X (= Touchstone (Fn X))) AS))
                  [Head|(partition-with Fn (drop (length Head) [A|AS]))]))
-
-(define unique
-  \* remove all duplicate elements from a list *\
-  {[A] --> [A]}
-  AS -> (unique- [] AS))
 
 (define unique-
   {[A] --> [A] --> [A]}
@@ -140,15 +141,20 @@
                    (unique- BS AS)
                    (unique- [A|BS] AS)))
 
-(define frequencies
-  \* returns the number of occurences of each unique element in a list *\
-  {[A] --> [(@p number A)]}
-  AS -> (frequencies- [] AS))
+(define unique
+  \* remove all duplicate elements from a list *\
+  {[A] --> [A]}
+  AS -> (unique- [] AS))
 
 (define frequencies-
-  {[(@p number A)] --> [A] --> [(@p number A)]}
+  {[(number * A)] --> [A] --> [(number * A)]}
   ACC [] -> ACC
   ACC [A|AS] -> (frequencies- [(@p A (+ 1 (occurrences A AS)))|ACC] (remove A AS)))
+
+(define frequencies
+  \* returns the number of occurences of each unique element in a list *\
+  {[A] --> [(number * A)]}
+  AS -> (frequencies- [] AS))
 
 (define shuffle
   \* return a random permutation of a list *\
@@ -158,15 +164,9 @@
           [(nth Index AS)|(shuffle (append (take (- Index 1) AS)
                                            (drop Index AS)))]))
 
-(define rand-elt
-  \* return a random element of a list *\
-  {[A] --> A}
-  [] -> NIL
-  AS -> (nth (+ 1 (random (length AS))) AS))
-
 (define remove-first
   \* remove the first occurance of argument 1 in argument 2 *\
-  {A --> [A]}
+  {A --> [A] --> [A]}
   _ [] -> []
   X [A|AS] -> (if (= X A) AS [A|(remove-first X AS)]))
 
