@@ -108,6 +108,11 @@
   (@p (@p String _) Matches) Index -> (@p (@p String Index) Matches)
   String Index -> (starting-at (new-state String) Index) where (string? String))
 
+(define successful?
+  {re-state --> boolean}
+  false -> false
+  _ -> true)
+
 \*******************************************************************************
  * compilation of a regular expression from a string representation
  *\
@@ -116,7 +121,7 @@
   []     -> (lambda _ false)
   [R|Rs] -> (lambda State
               (let Result ((re R) State)
-                (if (not (= false Result))
+                (if (successful? Result)
                     Result
                     ((re-or Rs) State)))))
 
@@ -125,7 +130,7 @@
   []     -> (lambda X X)
   [R|Rs] -> (lambda State
               (let Result ((re R) State)
-                (if (not (= false Result))
+                (if (successful? Result)
                     ((re-and Rs) Result)
                     false))))
 
@@ -134,7 +139,7 @@
   R -> (let RC (re R)
          (lambda State
            (let Result (RC State)
-             (if (not (= false Result))
+             (if (successful? Result)
                  ((re-repeat RC) Result)
                  State)))))
 
@@ -143,7 +148,7 @@
   E -> (lambda State
          (let Beg (index State)
               Result ((re E) State)
-           (if (not (= false Result))
+           (if (successful? Result)
                (@p (state Result) [(index Result) Beg|(matches Result)])
                false))))
 
@@ -153,10 +158,10 @@
                  RC2 (re R2)
               (lambda State
                 (let Result1 (RC2 State)
-                  (if (not (= false Result1))
+                  (if (successful? Result1)
                       Result1
                       (let Result2 (RC1 State)
-                        (if (not (= false Result2))
+                        (if (successful? Result2)
                             ((re-repeat-lazy R1 R2) Result2)
                             false)))))))
 
