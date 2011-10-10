@@ -52,6 +52,17 @@
  *                     "Lorem ipsum dolor sit amet, 26, mattis eget.")
  *   ["ipsum" "eget"]
  *
+ * Finally it is also possible to express regular expressions using S-exprs rather
+ * than strings, for example
+ *
+ *   (1-) (match-strings (re-search [: d [+ [| o l r]]] "Lorem ipsum dolor sit, 26."))
+ *   ["dolor"]
+ *
+ * The syntax for S-expr regular expressions is as follows.
+ *  [: ...] ---------------- consequtive regular expressions
+ *  [| ...] ---------------- regular expression alternatives
+ *  [* ...] and [+ ...] ---- repeating regular expressions
+ *  [*? R1 R2] ------------- compile R1 as a lazy regular expression followed by R2
  *
  *** Code:
  *\
@@ -265,6 +276,7 @@
   space      -> (to-re re-space?)
   alpha      -> (to-re re-alpha?)
   word       -> (to-re re-word?)
+  Sym        -> (re-and (map (function re) (explode (str Sym)))) where (symbol? Sym)
   [- A B]    -> (re-range A B)
   [| |RS]    -> (re-or RS)
   [bar! |RS] -> (re-or RS)
