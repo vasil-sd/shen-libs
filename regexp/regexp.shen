@@ -89,7 +89,8 @@
 (define next
   {re-state --> string}
   (@p (@p String Index) _) -> (trap-error (pos String Index) (/. _ eos))
-  String -> (next (new-state String)) where (string? String))
+  String -> (next (new-state String)) where (string? String)
+  What -> (print (make-string "what the ~S" What)))
 
 (define increment
   {re-state --> re-state}
@@ -190,16 +191,6 @@
   [R "*"|Rs] -> (cons (re-repeat R) (compile-2 Rs))
   [R|Rs]     -> (cons R (compile-2 Rs)))
 
-(define re
-  \* Compile a string to a regular expression *\
-  {string --> regexp}
-  Expr -> (re-and (compile-2 (compile-1 (parse Expr)))) where (string? Expr)
-  digit -> (to-re re-digit?)
-  space -> (to-re re-space?)
-  alpha -> (to-re re-alpha?)
-  word -> (to-re re-word?)
-  X -> X)
-
 (define parse
   \* Convert a string regexp into a list of compiled regular expressions and strings *\
   {string --> [A]}
@@ -267,39 +258,26 @@
 \*******************************************************************************
  * External functions
  *\
-(defmacro list-macro
-  [@l B] -> [cons B []]
-  [@l B | BS] -> [cons B (list-macro [@l | BS])])
-
-(defmacro re-or-macro
-  [| R] -> [re R]
-  [| R|RS] -> [re-or (list-macro [@l R|RS])])
-
-(defmacro re-and-macro
-  [: R] -> [re R]
-  [: R | RS] -> [re-and (list-macro [@l R|RS])])
-
-(defmacro re-repeat-macro
-  [r* R] -> [re-repeat [re R]])
-
-(defmacro re-repeat-plus-macro
-  [r+ R] -> (let TmpName (intern (str (gensym tmpname)))
-              [let TmpName [re R]
-                (re-and-macro [: TmpName [re-repeat TmpName]])]))
-
-(defmacro re-lazy-repeat-macro
-  [r*? R1 R2] -> [re-repeat-lazy [re R1] [re R2]]
-  [r*? R1]    -> [re-repeat-lazy [re R1] NIL])
-
-(defmacro re-lazy-repeat-plus-macro
-  [r+? R1 R2] -> (let TmpName (intern (str (gensym tmpname)))
-                   [let TmpName [re R1]
-                     (re-and-macro
-                      [: TmpName [re-repeat-lazy TmpName [re R2]]])])
-  [r+? R1]    -> (let TmpName (intern (str (gensym tmpname)))
-                   [let TmpName [re R1]
-                     (re-and-macro
-                      [: TmpName [re-repeat-lazy TmpName NIL]])]))
+(define re
+  \* Compile a string or S-expr to a regular expression *\
+  Str        -> (re-and (compile-2 (compile-1 (parse Str)))) where (string? Str)
+  digit      -> (to-re re-digit?)
+  space      -> (to-re re-space?)
+  alpha      -> (to-re re-alpha?)
+  word       -> (to-re re-word?)
+  [- A B]    -> (re-range A B)
+  [| |RS]    -> (re-or RS)
+  [bar! |RS] -> (re-or RS)
+  [: |RS]    -> (re-and RS)
+  [m |RS]    -> (re-match RS)
+  [+ R]      -> (re [: R [* R]])
+  [* R]      -> (re-repeat R)
+  [+? A B]   -> [: A (re-repeat-lazy A B)]
+  [+? A]     -> [: A (re-repeat-lazy A NIL)]
+  [*? A B]   -> (re-repeat-lazy A B)
+  [*? A]     -> (re-repeat-lazy A NIL)
+  CS         -> (re [:|CS]) where (cons? CS)
+  X          -> X)
 
 (define re-search
   \* Parse and search for a regular expression in a string. *\
