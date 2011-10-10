@@ -115,7 +115,7 @@
   \* Create a disjunction of regular expressions *\
   []     -> (lambda _ false)
   [R|Rs] -> (lambda State
-              (let Result ((re-compile R) State)
+              (let Result ((re R) State)
                 (if (not (= false Result))
                     Result
                     ((re-or Rs) State)))))
@@ -124,14 +124,14 @@
   \* Create a conjunction of regular expressions *\
   []     -> (lambda X X)
   [R|Rs] -> (lambda State
-              (let Result ((re-compile R) State)
+              (let Result ((re R) State)
                 (if (not (= false Result))
                     ((re-and Rs) Result)
                     false))))
 
 (define re-repeat
   \* Repeatedly apply a regular expression until it fails *\
-  R -> (let RC (re-compile R)
+  R -> (let RC (re R)
          (lambda State
            (let Result (RC State)
              (if (not (= false Result))
@@ -142,7 +142,7 @@
   \* Wrap a regular expression into a match. *\
   E -> (lambda State
          (let Beg (index State)
-              Result ((re-compile E) State)
+              Result ((re E) State)
            (if (not (= false Result))
                (@p (state Result) [(index Result) Beg|(matches Result)])
                false))))
@@ -169,10 +169,14 @@
   [R "*"|Rs] -> (cons (re-repeat R) (compile-2 Rs))
   [R|Rs]     -> (cons R (compile-2 Rs)))
 
-(define re-compile
+(define re
   \* Compile a string to a regular expression *\
   {string --> regexp}
   Expr -> (re-and (compile-2 (compile-1 (parse Expr)))) where (string? Expr)
+  digit -> (to-re re-digit?)
+  space -> (to-re re-space?)
+  alpha -> (to-re re-alpha?)
+  word -> (to-re re-word?)
   X -> X)
 
 (define parse
@@ -247,19 +251,19 @@
   [@l B | BS] -> [cons B (list-macro [@l | BS])])
 
 (defmacro re-or-macro
-  [| R] -> [re-compile R]
+  [| R] -> [re R]
   [| R|RS] -> [re-or (list-macro [@l R|RS])])
 
 (defmacro re-and-macro
-  [: R] -> [re-compile R]
+  [: R] -> [re R]
   [: R | RS] -> [re-and (list-macro [@l R|RS])])
 
 (defmacro re-repeat-macro
-  [r* R] -> [re-repeat [re-compile R]])
+  [r* R] -> [re-repeat [re R]])
 
 (defmacro re-repeat-plus-macro
   [r+ R] -> (let TmpName (intern (str (gensym tmpname)))
-              [let TmpName [re-compile R]
+              [let TmpName [re R]
                 (re-and-macro [: TmpName [re-repeat TmpName]])]))
 
 (define re-search
@@ -270,7 +274,7 @@
 (define re-search-from
   \* Parse and search for a regular expression in a string starting at arg3. *\
   {string --> string --> integer --> string}
-  Re Str Ind -> (re-search- (with-match (re-compile Re))
+  Re Str Ind -> (re-search- (with-match (re Re))
                             (starting-at (new-state Str) Ind)))
 
 (define re-search-
@@ -286,7 +290,7 @@
 (define do-matches
   \* Call a function on every match of arg2 in arg3 *\
   {(match-data --> A) --> string --> string --> [A]}
-  Fn Re Str -> (do-matches- Fn (with-match (re-compile Re)) (new-state Str)))
+  Fn Re Str -> (do-matches- Fn (with-match (re Re)) (new-state Str)))
 
 (define do-matches-
   \* Call arg1 on the match data from every match of arg2 in arg3 *\
