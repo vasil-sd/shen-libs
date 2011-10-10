@@ -147,6 +147,19 @@
                (@p (state Result) [(index Result) Beg|(matches Result)])
                false))))
 
+(define re-repeat-lazy
+  R1 NIL -> (lambda State State)
+  R1 R2  -> (let RC1 (re R1)
+                 RC2 (re R2)
+              (lambda State
+                (let Result1 (RC2 State)
+                  (if (not (= false Result1))
+                      Result1
+                      (let Result2 (RC1 State)
+                        (if (not (= false Result2))
+                            ((re-repeat-lazy R1 R2) Result2)
+                            false)))))))
+
 (define compile-1
   \* Condense (...|...) and [...] control constructs *\
   [] -> []
@@ -165,7 +178,10 @@
 (define compile-2
   \* Handle + and * control constructs *\
   []         -> []
+  [R "+" "?" |Rs] -> (cons R (compile-2 [R "*" "?"|Rs]))
   [R "+"|Rs] -> (cons R (compile-2 [R "*"|Rs]))
+  [R1 "*" "?" R2|Rs] -> (cons (re-repeat-lazy R1 R2) (compile-2 Rs))
+  [R1 "*" "?"|Rs] -> (cons (re-repeat-lazy R1 NIL) (compile-2 Rs))
   [R "*"|Rs] -> (cons (re-repeat R) (compile-2 Rs))
   [R|Rs]     -> (cons R (compile-2 Rs)))
 
@@ -197,13 +213,13 @@
   (@s "[:word:]" Str)  -> [(to-re re-word?)               |(parse Str)]
   (@s "\\W" Str)       -> [(to-re (complement re-word?))  |(parse Str)]
   \* Beginning and end markers *\
-  (@s "^" Str) ->         [beginning-of-string? | (parse Str)]
+  \** (@s "^" Str) ->         [beginning-of-string? | (parse Str)] **\
   (@s "$" Str) ->         [end-of-string?       | (parse Str)]
   \* Control characters *\
   (@s "(" Str) -> ["("|(parse Str)] (@s ")" Str) -> [")"|(parse Str)]
   (@s "[" Str) -> ["["|(parse Str)] (@s "]" Str) -> ["]"|(parse Str)]
   (@s "+" Str) -> ["+"|(parse Str)] (@s "*" Str) -> ["*"|(parse Str)]
-  (@s "|" Str) -> ["|"|(parse Str)]
+  (@s "|" Str) -> ["|"|(parse Str)] (@s "?" Str) -> ["?"|(parse Str)]
   \* Escape'd and Regular Characters *\
   (@s "\\" C Str) -> [(to-re (= C))|(parse Str)]
   (@s C Str)      -> [(to-re (= C))|(parse Str)])
@@ -265,6 +281,20 @@
   [r+ R] -> (let TmpName (intern (str (gensym tmpname)))
               [let TmpName [re R]
                 (re-and-macro [: TmpName [re-repeat TmpName]])]))
+
+(defmacro re-lazy-repeat-macro
+  [r*? R1 R2] -> [re-repeat-lazy [re R1] [re R2]]
+  [r*? R1]    -> [re-repeat-lazy [re R1] NIL])
+
+(defmacro re-lazy-repeat-plus-macro
+  [r+? R1 R2] -> (let TmpName (intern (str (gensym tmpname)))
+                   [let TmpName [re R1]
+                     (re-and-macro
+                      [: TmpName [re-repeat-lazy TmpName [re R2]]])])
+  [r+? R1]    -> (let TmpName (intern (str (gensym tmpname)))
+                   [let TmpName [re R1]
+                     (re-and-macro
+                      [: TmpName [re-repeat-lazy TmpName NIL]])]))
 
 (define re-search
   \* Parse and search for a regular expression in a string. *\
