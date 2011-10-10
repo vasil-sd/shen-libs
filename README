@@ -1,17 +1,17 @@
 This is a repository of experimental Shen libraries.
 
-Shen is modern rapidly developing programming language (more preciesely - 
+Shen is modern rapidly developing programming language (more precisely - 
 metalanguage) created by Dr. Mark Tarver for all modern platforms (Python, 
 JavaScript, Scheme, Common Lisp and many others).
 It combines functional programming, pattern-matching, compiler-compiler, 
 declarative programming (almost one-to-one as in prolog) the most powerful 
 type system in one single, and a compact and crossplatform core.
-You may found more inforamtion about it on site http://www.lambdassociates.org
+You may found more information about it on site http://www.lambdassociates.org
 
 If you want to share your code with other Shen users then write to 
 vasil.s.d AT gmail.com for details how to do it.
 
-Your patches, suggestions, remarks are always wellcome.
+Your patches, suggestions, remarks are always welcome.
 
 
 Vasil S. Diadov
