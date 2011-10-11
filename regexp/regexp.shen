@@ -73,33 +73,49 @@
  * re-state holds the state and match data of regular expressions
  *\
 (datatype re-state
-    state : (@p string integer);
-  matches : [integer];
-  _________________________________
-  (@p state matches) : re-state;)
+  String : string;
+  Index : number;
+  Matches : [number];
+  =============================
+  (@p (@p String Index) Matches) : re-state;
+
+  Simple-state : string;
+  =======================
+  Simple-state : re-state;
+
+  _________________
+  false : re-state;)
 
 (define new-state
-  {string --> re-state}
+  {re-state --> re-state}
   (@p (@p String Index) Matches) -> (@p (@p String Index) Matches)
   String -> (@p (@p String 0) []) where (string? String))
 
 (define state
-  {re-state --> (@p string integer)}
-  (@p State Matches) -> State
+  {re-state --> (string * number)}
+  (@p (@p String Index) Matches) -> (@p String Index)
   String -> (@p String 0) where (string? String))
 
 (define index
-  {re-state --> integer}
+  {re-state --> number}
   X -> (snd (state X)))
 
 (define matches
-  {re-state --> [(@p integer integer)]}
-  (@p State Matches) -> Matches
+  {re-state --> [number]}
+  (@p (@p String Index) Matches) -> Matches
   String -> [] where (string? String))
 
+(datatype re-next
+  Re-string : string;
+  ===================
+  Re-string : re-next;
+
+  ___________________
+  eos : re-next;)
+
 (define next
-  {re-state --> string}
-  (@p (@p String Index) _) -> (trap-error (pos String Index) (/. _ eos))
+  {re-state --> re-next}
+  (@p (@p String Index) Matches) -> (trap-error (pos String Index) (/. _ eos))
   String -> (next (new-state String)) where (string? String)
   What -> (print (make-string "what the ~S" What)))
 
@@ -109,14 +125,13 @@
   String -> (increment (new-state String)) where (string? String))
 
 (define match-strings
-  {re-state --> [strings]}
+  {re-state --> [string]}
   false -> []
-  (@p (@p S _) Ms) -> (map (/. M (substr S (nth 1 M) (nth 2 M)))
-                           (partition 2 (reverse Ms)))
-  String -> [] where (string? String))
+  String -> [] where (string? String)
+  (@p (@p S I) [A B|MS]) -> [(substr S A B)|(match-strings (@p (@p S I) MS))])
 
 (define starting-at
-  {re-state --> integer --> re-state}
+  {re-state --> number --> re-state}
   (@p (@p String _) Matches) Index -> (@p (@p String Index) Matches)
   String Index -> (starting-at (new-state String) Index) where (string? String))
 
@@ -298,7 +313,7 @@
 
 (define re-search-from
   \* Parse and search for a regular expression in a string starting at arg3. *\
-  {string --> string --> integer --> string}
+  {string --> string --> number --> string}
   Re Str Ind -> (re-search- (with-match (re Re))
                             (starting-at (new-state Str) Ind)))
 
@@ -335,5 +350,5 @@
   (reduce (/. Match Acc
               (@s (substr Acc 0 (nth 2 Match))
                   Replace
-                  (substr Acc (nth 1 Match) (lengthstr Acc))))
+                  (substr Acc (nth 1 Match) (length-str Acc))))
           String (reverse (do-matches (function snd) Regexp String))))
