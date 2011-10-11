@@ -335,5 +335,5 @@
   (reduce (/. Match Acc
               (@s (substr Acc 0 (nth 2 Match))
                   Replace
-                  (substr Acc (nth 1 Match) (lengthstr Acc))))
+                  (substr Acc (nth 1 Match) (length-str Acc))))
           String (reverse (do-matches (function snd) Regexp String))))

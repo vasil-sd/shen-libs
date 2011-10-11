@@ -29,33 +29,40 @@
 
 (define takestr
   \* return the n-length prefix of string *\
-  {N --> string --> string}
+  {number --> string --> string}
   _ "" -> ""
-  0 _ -> ""
+  0 _  -> ""
   N (@s S SS) -> (@s S (takestr (- N 1) SS)))
 
 (define dropstr
   \* drop the n-length prefix of string *\
-  {N --> string --> string}
+  {number --> string --> string}
   _ "" -> ""
   0 S -> S
   N (@s S SS) -> (dropstr (- N 1) SS))
 
 (define substr
   \* Return a substring of a string. *\
+  {string --> number --> number --> string}
   String Start End -> (dropstr Start (takestr End String)))
 
-(define lengthstr
+(define length-str
   \* return the length of a string *\
+  {string --> number}
   "" -> 0
-  (@s _ SS) -> (+ 1 (lengthstr SS)))
+  (@s _ SS) -> (+ 1 (length-str SS)))
 
-(define indexstr
+(define index-str
   \* return the index of arg2 in arg1 or -1 if it doesn't appear *\
-  {string --> string --> integer}
+  {string --> string --> number}
   "" _ -> 0
   _ "" -> -1
-  (@s T TS) S -> (if (= T S) 0 (+ 1 (indexstr TS S))))
+  (@s T TS) S -> (if (= T S) 0 (+ 1 (index-str TS S))))
+
+(define reverse-str
+  {string --> string}
+  "" -> ""
+  (@s C RST) -> (@s (reversestr RST) C))
 
 (define starts-with
   \* check if the first string starts with the second *\
@@ -76,41 +83,41 @@
   {string --> string --> string --> string}
   _ _ "" -> ""
   S R T -> (if (starts-with T S)
-               (@s R (dropstr (lengthstr S) T))
+               (@s R (dropstr (length-str S) T))
                (@s (pos T 0) (replace-str S R (tlstr T)))))
 
 (define join
   \* join a list of strings with a string seperator *\
-  {[string] --> string --> string}
+  {string --> [string] --> string}
   S TS -> (reduce (/. S ACC (@s ACC S)) "" (interpose S TS)))
+
+(define split-
+  {string --> string --> string --> [string] --> [string]}
+  _ "" Holder Acc -> (append (reverse Acc) [Holder])
+  S T  Holder Acc -> (if (starts-with T S)
+                         (split- S (dropstr (length-str S) T) "" [Holder|Acc])
+                         (split- S (tlstr T) (@s Holder (pos T 0)) Acc)))
 
 (define split
   \* split a string on every occurance of a substring *\
   {string --> string --> [string]}
   S T -> (split- S T "" []))
 
-(define split-
-  {string --> string --> string --> [string] --> [string]}
-  _ "" Holder Acc -> (append (reverse Acc) [Holder])
-  S T  Holder Acc -> (if (starts-with T S)
-                         (split- S (dropstr (lengthstr S) T) "" [Holder|Acc])
-                         (split- S (tlstr T) (@s Holder (pos T 0)) Acc)))
-
 (define trim-left
   \* remove all trailing and leading whitespace from a string *\
   {string --> string}
-  (@s S STR) -> (trim STR) where (or (= S " ") (= S "\n"))
+  (@s S STR) -> (trim-left STR) where (or (= S " ") (= S "\n"))
   STR -> STR)
 
 (define trim-right
   \* remove all trailing whitespace from a string *\
   {string --> string}
-  STR -> (reverse (trim-left (reverse STR))))
+  STR -> (reverse-str (trim-left (reverse-str STR))))
 
 (define chomp
   \* remove all trailing whitespace from a string *\
   {string --> string}
-  STR -> (reverse (trim-left (reverse STR))))
+  STR -> (reverse-str (trim-left (reverse-str STR))))
 
 (define trim
   \* remove all trailing and leading whitespace from a string *\
