@@ -176,3 +176,11 @@
   _ [] -> []
   _ [A] -> [A]
   S [A|AS] -> [A S|(interpose S AS)])
+
+(define subset?
+  {[A] --> [A] --> boolean}
+  [] _ -> true
+  _ [] -> false
+  [X|XS] YS -> (if (element? X YS)
+                   (subset? XS YS)
+                   false))
