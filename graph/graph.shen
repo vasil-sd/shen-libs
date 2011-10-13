@@ -40,6 +40,19 @@ Boston, MA 02110-1301, USA.
   ==============================
   (@p Vertices Edges) : hypergraph;)
 
+(datatype edge
+  ____________
+  [] : (edge 0);
+
+  Edge : (edge N);
+  ==================================
+  [Vertex | Edge] : (edge (succ N));)
+
+(datatype graph
+  Vertices : (list A); Edges : (list (edge (succ (succ 0))));
+  ===========================================================
+  (@p Vertices Edges) : graph;)
+
 (define vertices
   \* Return a list of vertices *\
   {hypergraph --> (list A)}
