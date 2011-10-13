@@ -103,7 +103,7 @@ Boston, MA 02110-1301, USA.
 
 (define place-vertex
   \* given a graph, vertex and list of vertex partitions, partition the vertex *\
-  {hypergraph --> A --> (list A) --> (list A)}
+  {hypergraph --> A --> (list (list A)) --> (list (list A))}
   Graph V [] -> (if (element? V (neighbors Graph V))
                     (simple-error
                      (make-string "self-loop ~S, no vertex partition" V))
