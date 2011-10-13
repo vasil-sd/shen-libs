@@ -125,3 +125,15 @@ Boston, MA 02110-1301, USA.
   \* check if a graph is bipartite *\
   {hypergraph --> boolean}
   Graph -> (= 2 (length (vertex-partition Graph))))
+
+(define graph-complement
+  \* swap the vertices and edges of a hypergraph *\
+  {hypergraph --> hypergraph}
+  (@p Vertices Edges) ->
+  (let Labeled (indexed Edges)
+    (@p (map (function fst) Labeled)
+        (remove NIL
+                (map (lambda V
+                       (map (function fst)
+                            (filter (lambda L (element? V (snd L))) Labeled)))
+                     Vertices)))))

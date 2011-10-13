@@ -178,9 +178,16 @@
   S [A|AS] -> [A S|(interpose S AS)])
 
 (define subset?
+  \* check if arg1 is a subset of arg2 *\
   {[A] --> [A] --> boolean}
   [] _ -> true
   _ [] -> false
   [X|XS] YS -> (if (element? X YS)
                    (subset? XS YS)
                    false))
+
+(define cartesian-product
+  \* return the cartesian product of two lists *\
+  {(list A) --> (list B) --> (list (A * B))}
+  [] _ -> []
+  [A|AS] BS -> (append (map (@p A) BS) (cartesian-product AS BS)))
