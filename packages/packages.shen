@@ -39,7 +39,7 @@ paths.
 *** Code: *\
 (package packages- [loaded? require]
 
-(set *packages* NIL)
+(set *packages* [])
 
 (define loaded?
   {string --> boolean}

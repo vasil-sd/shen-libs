@@ -180,7 +180,7 @@
                false))))
 
 (define re-repeat-lazy
-  R1 NIL -> (lambda State State)
+  R1 [] -> (lambda State State)
   R1 R2  -> (let RC1 (re R1)
                  RC2 (re R2)
               (lambda State
@@ -213,13 +213,13 @@
   [R "+" "?" |Rs] -> (cons R (compile-2 [R "*" "?"|Rs]))
   [R "+"|Rs] -> (cons R (compile-2 [R "*"|Rs]))
   [R1 "*" "?" R2|Rs] -> (cons (re-repeat-lazy R1 R2) (compile-2 Rs))
-  [R1 "*" "?"|Rs] -> (cons (re-repeat-lazy R1 NIL) (compile-2 Rs))
+  [R1 "*" "?"|Rs] -> (cons (re-repeat-lazy R1 []) (compile-2 Rs))
   [R "*"|Rs] -> (cons (re-repeat R) (compile-2 Rs))
   [R|Rs]     -> (cons R (compile-2 Rs)))
 
 (define parse
   \* Convert a string regexp into a list of compiled regular expressions and strings *\
-  {string --> [A]}
+  {string --> (list A)}
   "" -> []
   \* Character Classes *\
   (@s "\\d" Str)       -> [(to-re re-digit?)              |(parse Str)]
@@ -300,9 +300,9 @@
   [+ R]      -> (re [: R [* R]])
   [* R]      -> (re-repeat R)
   [+? A B]   -> [: A (re-repeat-lazy A B)]
-  [+? A]     -> [: A (re-repeat-lazy A NIL)]
+  [+? A]     -> [: A (re-repeat-lazy A [])]
   [*? A B]   -> (re-repeat-lazy A B)
-  [*? A]     -> (re-repeat-lazy A NIL)
+  [*? A]     -> (re-repeat-lazy A [])
   CS         -> (re [:|CS]) where (cons? CS)
   X          -> X)
 
@@ -329,12 +329,12 @@
 
 (define do-matches
   \* Call a function on every match of arg2 in arg3 *\
-  {(match-data --> A) --> string --> string --> [A]}
+  {(match-data --> A) --> string --> string --> (list A)}
   Fn Re Str -> (do-matches- Fn (with-match (re Re)) (new-state Str)))
 
 (define do-matches-
   \* Call arg1 on the match data from every match of arg2 in arg3 *\
-  {(match-data --> A) --> regexp --> re-state --> [A]}
+  {(match-data --> A) --> regexp --> re-state --> (list A)}
   Fn Re State -> (let Try (Re State)
                    (if (= false Try)
                        (if (= eos (next State))

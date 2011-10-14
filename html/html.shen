@@ -74,8 +74,8 @@
                  Id-split (split (str #) (hd Class-split))
                  Tag (hd Id-split)
                  Id (tl Id-split)
-              ((if (= NIL Id) (/. X X) (cons [id (intern (hd Id))]))
-               ((if (= NIL Class) (/. X X) (cons [class Class])) 
+              ((if (= [] Id) (/. X X) (cons [id (intern (hd Id))]))
+               ((if (= [] Class) (/. X X) (cons [class Class])) 
                 [[tag (intern Tag)]]))))
 
 (define attributes

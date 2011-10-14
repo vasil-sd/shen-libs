@@ -132,7 +132,7 @@ Boston, MA 02110-1301, USA.
   (@p Vertices Edges) ->
   (let Labeled (indexed Edges)
     (@p (map (function fst) Labeled)
-        (remove NIL
+        (remove []
                 (map (lambda V
                        (map (function fst)
                             (filter (lambda L (element? V (snd L))) Labeled)))

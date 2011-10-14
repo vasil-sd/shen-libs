@@ -45,7 +45,7 @@ Boston, MA 02110-1301, USA.
 
 (define tassoc
   \* Like `assoc' for lists of tuples. *\
-  _ [] -> NIL
+  _ [] -> []
   X [A|AS] -> (if (= X (fst A)) A (tassoc X AS)))
 
 (define documentation
@@ -65,5 +65,5 @@ Boston, MA 02110-1301, USA.
 
 \* For extended comments in source code *\
 (defmacro comment-macro
-  [comment | _] -> NIL
-  [comment   _] -> NIL)
+  [comment | _] -> []
+  [comment   _] -> [])
