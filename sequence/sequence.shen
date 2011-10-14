@@ -164,6 +164,11 @@
           [(nth Index AS)|(shuffle (append (take (- Index 1) AS)
                                            (drop Index AS)))]))
 
+(define pick
+  \* return a random element of a list *\
+  {[A] --> A}
+  AS -> (nth (+ 1 (random (length AS))) AS))
+
 (define remove-first
   \* remove the first occurance of argument 1 in argument 2 *\
   {A --> [A] --> [A]}
