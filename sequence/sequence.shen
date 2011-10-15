@@ -25,6 +25,12 @@ This library implements a number of sequence utilities commonly
 found in functional languages.
 
 *** Code: *\
+(datatype nested
+  ____________
+  A : nested;
+  ___________________
+  (list A) : nested;)
+
 (package sequence- [take drop take-while drop-while range flatten
                     filter complement seperate zip indexed reduce
                     mapcon partition partition-with unique frequencies
@@ -62,12 +68,6 @@ found in functional languages.
   {number --> number --> [number]}
   X X -> [X]
   X Y -> [X|(range (if (> X Y) (- X 1) (+ X 1)) Y)])
-
-(datatype nested
-  ____________
-  A : nested;
-  ___________________
-  (list A) : nested;)
 
 (define flatten
   \* flatten a list of elements *\
