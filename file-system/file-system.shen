@@ -33,13 +33,25 @@ The following functions are provided.
   (file-exists? "path")
 
 *** Code: *\
-(package file-system- [file-exists? file-directory? join-paths
+(package file-system- [file-exists? file-directory? split-paths join-paths
                        directory-list directory-recur delete-file rename-file]
 
 (define starts-with
   "" _ -> true
   _ "" -> false
   (@s A AS) (@s B BS) -> (if (= A B) (starts-with AS BS) false))
+
+(define length-str
+  \* return the length of a string *\
+  {string --> number}
+  "" -> 0
+  (@s _ SS) -> (+ 1 (length-str SS)))
+
+(define mapcon
+  \* like map but concatenate the results *\
+  {(A --> (list B)) --> (list A) --> (list B)}
+  _ [] -> []
+  Fn [A|AS] -> (append (Fn A) (mapcon Fn AS)))
 
 (set *path-separator*
       \* ideally a new *operating-system* global variable could be used here *\
@@ -52,6 +64,17 @@ The following functions are provided.
           "/")
          (true "/")))
        (true "/")))
+
+(define split-paths
+  {string --> (list string)}
+  Path -> (path-split- Path "" []))
+
+(define path-split-
+  "" Holder Acc -> (reverse (if (= Holder "") Acc [Holder|Acc]))
+  (@s P Ps) Holder Acc ->
+    (if (= (value *path-separator*) P)
+        (path-split- Ps "" (if (= Holder "") Acc [Holder|Acc]))
+        (path-split- Ps (@s Holder P) Acc)))
 
 (define file-exists?
   \* check if a file exists *\
@@ -69,14 +92,15 @@ The following functions are provided.
             (if (= NIL (trap-error (PROBE-DIRECTORY Path) (/. E NIL)))
                 false true))))
 
+(define as-dir
+  Path -> (if (= (value *path-separator*) (pos Path (- (length-str Path) 1)))
+              Path
+              (@s Path (value *path-separator*))))
+
 (define join-paths
   \* return a path relative to a directory *\
   {string --> string --> string}
-  Dir Path -> (cond
-               ((= "Common Lisp" (value *language*))
-                (FORMAT NIL "~a" (MAKE-PATHNAME
-                                  (INTERN "DIRECTORY" "KEYWORD") Dir
-                                  (INTERN "NAME" "KEYWORD") Path)))))
+  Dir Path -> (@s (as-dir Dir) Path))
 
 (define directory-list
   {string --> [string]}
@@ -92,12 +116,6 @@ The following functions are provided.
                                          (INTERN "WILD" "KEYWORD")
                                          (INTERN "DEFAULTS" "KEYWORD") Path))))
                 (error (make-string "~S does not name a directory" Path))))))
-
-(define mapcon
-  \* like map but concatenate the results *\
-  {(A --> (list B)) --> (list A) --> (list B)}
-  _ [] -> []
-  Fn [A|AS] -> (append (Fn A) (mapcon Fn AS)))
 
 (define directory-recur
   \* call a function on every file within a directory *\

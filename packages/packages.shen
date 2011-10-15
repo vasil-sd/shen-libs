@@ -21,35 +21,50 @@ Boston, MA 02110-1301, USA.
 
 *** Commentary:
 
-These functions may be used to load external packages.
+The following configures the load-path to load all packages in shen-libs/
 
-  ensure that a package is loaded
-  (require package-name)
+(load "../file-system/file-system.shen")
+(load "packages.shen")
+(map (lambda P
+       (if (= ".git" (hd (reverse (split-paths P))))
+           false
+           (set *package-path* (adjoin P (value *package-path*)))))
+     (directory-list "../"))
 
-  check if a package has been loaded
-  (loaded? package-name)
+after which packages may be loaded as follows
 
-*** TODO:
-
-Once Shen gets some file-system facilities it would make sense to
-maintain a load path in which packages may be found.  When that
-happens then packages should be represented as symbols rather than
-paths.
+  (require sequence)
 
 *** Code: *\
-(package packages- [loaded? require]
+(package packages- [*packages* *package-path* loaded? require
+                    \* functions used from other packages *\
+                    join-paths]
 
 (set *packages* [])
+(set *package-path* [])
 
 (define loaded?
-  {string --> boolean}
+  {symbol --> boolean}
   \* check if a package has been loaded *\
   Pkg -> (element? Pkg (value *packages*)))
 
 (define require
   \* load a package if possible return boolean indiciating successful load *\
+  {symbol --> boolean}
+  Pkg -> (or (loaded? Pkg)
+             (and (require- (@s (str Pkg) ".shen") (value *package-path*))
+                  (do (set *packages* (adjoin Pkg (value *packages*))) true))))
+
+(define require-
+  {string --> (list string) --> boolean}
+  _ [] -> false
+  Path [Dir|Dirs] -> (if (try-load (join-paths Dir Path))
+                         true
+                         (require- Path Dirs)))
+
+(define try-load
   {string --> boolean}
-  Pkg -> (if (loaded? Pkg)
-             true
-             (trap-error (do (load Pkg) true) (lambda E false))))
+  Path -> (trap-error (do (load Path) true)
+                      (lambda E false)))
+
 )
