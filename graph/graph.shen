@@ -35,15 +35,6 @@ Boston, MA 02110-1301, USA.
  (require sequence)
  (/. E (load "../sequence/sequence.shen")))
 
-(package graph- [vertices edges neighbors connected-to connected?
-                 connected-components place-vertex vertex-partition
-                 bipartite? graph-complement
-                 \* symbols included from sequence *\
-                  take drop take-while drop-while range flatten
-                  filter complement seperate zip indexed reduce
-                  mapcon partition partition-with unique frequencies
-                  shuffle pick remove-first interpose subset?
-                  cartesian-product]
 \*** Types ***\
 (datatype hypergraph
   \* vertices are a set and edges are subset of the power set P(V) *\
@@ -63,6 +54,16 @@ Boston, MA 02110-1301, USA.
   Vertices : (list A); Edges : (list (edge (succ (succ 0))));
   ===========================================================
   (@p Vertices Edges) : graph;)
+
+(package graph- [vertices edges neighbors connected-to connected?
+                 connected-components place-vertex vertex-partition
+                 bipartite? graph-complement
+                 \* symbols included from sequence *\
+                  take drop take-while drop-while range flatten
+                  filter complement seperate zip indexed reduce
+                  mapcon partition partition-with unique frequencies
+                  shuffle pick remove-first interpose subset?
+                  cartesian-product]
 
 (define vertices
   \* Return a list of vertices *\

@@ -23,11 +23,11 @@ Boston, MA 02110-1301, USA.
 
 *** Code: *\
 (trap-error
- (require string)
- (require sequence)
+ (do (require string)
+     (require sequence))
  (/. E
-     (load "../string/string.shen")
-     (load "../sequence/sequence.shen")))
+     (do (load "../string/string.shen")
+         (load "../sequence/sequence.shen"))))
 
 \*** Documentation Strings ***\
 (defmacro def-macro

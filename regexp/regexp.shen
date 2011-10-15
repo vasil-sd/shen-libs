@@ -66,11 +66,33 @@ The syntax for S-expr regular expressions is as follows.
 
 *** Code: *\
 (trap-error
- (require string)
- (require sequence)
+ (do (require string)
+     (require sequence))
  (/. E
-     (load "../string/string.shen")
-     (load "../sequence/sequence.shen")))
+     (do (load "../string/string.shen")
+         (load "../sequence/sequence.shen"))))
+
+(datatype re-state
+  String : string;
+  Index : number;
+  Matches : [number];
+  =============================
+  (@p (@p String Index) Matches) : re-state;
+
+  Simple-state : string;
+  =======================
+  Simple-state : re-state;
+
+  _________________
+  false : re-state;)
+
+(datatype re-next
+  Re-string : string;
+  ===================
+  Re-string : re-next;
+
+  ___________________
+  eos : re-next;)
 
 (package regexp- [new-state state index matches next increment
                   match-strings starting-at successful? re re-search
@@ -88,19 +110,7 @@ The syntax for S-expr regular expressions is as follows.
 \*******************************************************************************
  * re-state holds the state and match data of regular expressions
  *\
-(datatype re-state
-  String : string;
-  Index : number;
-  Matches : [number];
-  =============================
-  (@p (@p String Index) Matches) : re-state;
 
-  Simple-state : string;
-  =======================
-  Simple-state : re-state;
-
-  _________________
-  false : re-state;)
 
 (define new-state
   {re-state --> re-state}
@@ -120,14 +130,6 @@ The syntax for S-expr regular expressions is as follows.
   {re-state --> [number]}
   (@p (@p String Index) Matches) -> Matches
   String -> [] where (string? String))
-
-(datatype re-next
-  Re-string : string;
-  ===================
-  Re-string : re-next;
-
-  ___________________
-  eos : re-next;)
 
 (define next
   {re-state --> re-next}
