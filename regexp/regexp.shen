@@ -74,7 +74,17 @@ The syntax for S-expr regular expressions is as follows.
 
 (package regexp- [new-state state index matches next increment
                   match-strings starting-at successful? re re-search
-                  re-search-from do-matches replace-regexp]
+                  re-search-from do-matches replace-regexp
+                  \* symbols included from sequence *\
+                  take drop take-while drop-while range flatten
+                  filter complement seperate zip indexed reduce
+                  mapcon partition partition-with unique frequencies
+                  shuffle pick remove-first interpose subset?
+                  cartesian-product
+                  \* symbols included from string *\
+                  takestr dropstr substr length-str index-str
+                  reverse-str starts-with substr? replace-str
+                  join split trim-left trim-right chomp trim]
 \*******************************************************************************
  * re-state holds the state and match data of regular expressions
  *\

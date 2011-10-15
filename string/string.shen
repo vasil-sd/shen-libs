@@ -30,7 +30,13 @@ This library implements a number of common string utilities.
 
 (package string- [takestr dropstr substr length-str index-str
                   reverse-str starts-with substr? replace-str
-                  join split trim-left trim-right chomp trim]
+                  join split trim-left trim-right chomp trim
+                  \* symbols included from sequence *\
+                  take drop take-while drop-while range flatten
+                  filter complement seperate zip indexed reduce
+                  mapcon partition partition-with unique frequencies
+                  shuffle pick remove-first interpose subset?
+                  cartesian-product]
 
 (define takestr
   \* return the n-length prefix of string *\
@@ -94,7 +100,7 @@ This library implements a number of common string utilities.
 (define join
   \* join a list of strings with a string seperator *\
   {string --> [string] --> string}
-  S TS -> (reduce (/. S ACC (@s ACC S)) "" (interpose S TS)))
+  S TS -> (reduce (/.  ACC  (@s ACC S)) "" (interpose S TS)))
 
 (define split-
   {string --> string --> string --> [string] --> [string]}

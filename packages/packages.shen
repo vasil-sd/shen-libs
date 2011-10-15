@@ -37,8 +37,14 @@ after which packages may be loaded as follows
 
 *** Code: *\
 (package packages- [*packages* *package-path* loaded? require
-                    \* functions used from other packages *\
-                    join-paths]
+                    \* symbols included from file-system *\
+                    join-paths
+                    \* symbols included from sequence *\
+                    take drop take-while drop-while range flatten
+                    filter complement seperate zip indexed reduce
+                    mapcon partition partition-with unique frequencies
+                    shuffle pick remove-first interpose subset?
+                    cartesian-product]
 
 (set *packages* [])
 (set *package-path* [])
