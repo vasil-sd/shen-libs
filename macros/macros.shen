@@ -22,8 +22,12 @@ Boston, MA 02110-1301, USA.
 *** Commentary:
 
 *** Code: *\
-(load "../sequence/sequence.shen")
-(load "../string/string.shen")
+(trap-error
+ (require string)
+ (require sequence)
+ (/. E
+     (load "../string/string.shen")
+     (load "../sequence/sequence.shen")))
 
 \*** Documentation Strings ***\
 (defmacro def-macro

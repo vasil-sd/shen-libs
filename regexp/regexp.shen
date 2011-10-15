@@ -1,74 +1,80 @@
 \* regexp.shen --- regular expressions for shen
- *
- * Copyright (C) 2011  Eric Schulte
- *
- *** License:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with GNU Emacs; see the file COPYING.  If not, write to the
- * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- * Boston, MA 02110-1301, USA.
- *
- *** Commentary:
- *
- * This library implements regular expressions for shen.  String regular
- * expressions are compiled to shen functions which accept a string argument
- * and return an re-state object.
- *
- * See the bottom portion of this file for external functions which may be
- * used as an access point for compiling and using regular expressions.
- *
- * Some examples are included below.
- *
- * Character classes.
- *
- *   (1-) (match-strings (re-search "[:digit:]+" "Lorem ipsum dolor sit, 26."))
- *   ["26"]
- *
- *   (2-) (match-strings (re-search "\\d+" "Lorem ipsum dolor sit, 26."))
- *   ["26"]
- *
- *   (3-) (match-strings (re-search "\\w+" "Lorem ipsum dolor sit amet, 26, mattis eget."))
- *   ["Lorem"]
- *
- * Alternatives grouped with [...]'s.
- *
- *   (4-) (match-strings (re-search "d[olr]+" "Lorem ipsum dolor sit, 26."))
- *   ["dolor"]
- *
- * Nested regular expressions and alternatives with (...|...).
- *
- *   (5-) (do-matches (/. X (hd (match-strings X))) "(ipsum|eget)"
- *                     "Lorem ipsum dolor sit amet, 26, mattis eget.")
- *   ["ipsum" "eget"]
- *
- * Finally it is also possible to express regular expressions using S-exprs rather
- * than strings, for example
- *
- *   (1-) (match-strings (re-search [: d [+ [| o l r]]] "Lorem ipsum dolor sit, 26."))
- *   ["dolor"]
- *
- * The syntax for S-expr regular expressions is as follows.
- *  [: ...] ---------------- consequtive regular expressions
- *  [| ...] ---------------- regular expression alternatives
- *  [* ...] and [+ ...] ---- repeating regular expressions
- *  [*? R1 R2] ------------- compile R1 as a lazy regular expression followed by R2
- *
- *** Code:
- *\
-(load "../sequence/sequence.shen")
-(load "../string/string.shen")
 
+Copyright (C) 2011  Eric Schulte
+
+*** License:
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs; see the file COPYING.  If not, write to the
+Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.
+
+*** Commentary:
+
+This library implements regular expressions for shen.  String regular
+expressions are compiled to shen functions which accept a string argument
+and return an re-state object.
+
+See the bottom portion of this file for external functions which may be
+used as an access point for compiling and using regular expressions.
+
+Some examples are included below.
+
+Character classes.
+
+  (1-) (match-strings (re-search "[:digit:]+" "Lorem ipsum dolor sit, 26."))
+  ["26"]
+
+  (2-) (match-strings (re-search "\\d+" "Lorem ipsum dolor sit, 26."))
+  ["26"]
+
+  (3-) (match-strings (re-search "\\w+" "Lorem ipsum dolor sit amet, 26, mattis eget."))
+  ["Lorem"]
+
+Alternatives grouped with [...]'s.
+
+  (4-) (match-strings (re-search "d[olr]+" "Lorem ipsum dolor sit, 26."))
+  ["dolor"]
+
+Nested regular expressions and alternatives with (...|...).
+
+  (5-) (do-matches (/. X (hd (match-strings X))) "(ipsum|eget)"
+                    "Lorem ipsum dolor sit amet, 26, mattis eget.")
+  ["ipsum" "eget"]
+
+Finally it is also possible to express regular expressions using S-exprs rather
+than strings, for example
+
+  (1-) (match-strings (re-search [: d [+ [| o l r]]] "Lorem ipsum dolor sit, 26."))
+  ["dolor"]
+
+The syntax for S-expr regular expressions is as follows.
+ [: ...] ---------------- consequtive regular expressions
+ [| ...] ---------------- regular expression alternatives
+ [* ...] and [+ ...] ---- repeating regular expressions
+ [*? R1 R2] ------------- compile R1 as a lazy regular expression followed by R2
+
+*** Code: *\
+(trap-error
+ (require string)
+ (require sequence)
+ (/. E
+     (load "../string/string.shen")
+     (load "../sequence/sequence.shen")))
+
+(package regexp- [new-state state index matches next increment
+                  match-strings starting-at successful? re re-search
+                  re-search-from do-matches replace-regexp]
 \*******************************************************************************
  * re-state holds the state and match data of regular expressions
  *\
@@ -352,3 +358,5 @@
                   Replace
                   (substr Acc (nth 1 Match) (length-str Acc))))
           String (reverse (do-matches (function snd) Regexp String))))
+
+)
