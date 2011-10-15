@@ -36,7 +36,11 @@ the convertions of Clojure's hiccup.
  (require string)
  (/. E (load "../string/string.shen")))
 
-(package string- [html]
+(package string- [html
+                  \* symbols included from string *\
+                  takestr dropstr substr length-str index-str
+                  reverse-str starts-with substr? replace-str
+                  join split trim-left trim-right chomp trim]
 
 (define to-str
   \* return argument as a string, if already a string do not change *\
