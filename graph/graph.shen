@@ -31,8 +31,13 @@ Boston, MA 02110-1301, USA.
 [4 5 2 3 1]
 
 *** Code: *\
-(load "../sequence/sequence.shen")
+(trap-error
+ (require sequence)
+ (/. E (load "../sequence/sequence.shen")))
 
+(package graph- [vertices edges neighbors connected-to connected?
+                 connected-components place-vertex vertex-partition
+                 bipartite? graph-complement]
 \*** Types ***\
 (datatype hypergraph
   \* vertices are a set and edges are subset of the power set P(V) *\
@@ -132,8 +137,10 @@ Boston, MA 02110-1301, USA.
   (@p Vertices Edges) ->
   (let Labeled (indexed Edges)
     (@p (map (function fst) Labeled)
-        (remove NIL
+        (remove []
                 (map (lambda V
                        (map (function fst)
                             (filter (lambda L (element? V (snd L))) Labeled)))
                      Vertices)))))
+
+)
