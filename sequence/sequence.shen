@@ -31,12 +31,16 @@ found in functional languages.
                     shuffle pick remove-first interpose subset?
                     cartesian-product]
 
+(define take-aux
+  {number --> (list A) --> (list A) --> (list A)}
+  _ [] Acc -> (reverse Acc)
+  0 _ Acc -> (reverse Acc)
+  N [A | Rest] Acc -> (take-aux (- N 1) Rest [A | Acc]))
+
 (define take
   \* take and return N elements from the front of a list *\
   {number --> (list A) --> (list A)}
-  _ [] -> []
-  0 _  -> []
-  N [A|AS] -> [A|(take (- N 1) AS)])
+  N L -> (take-aux N L []))
 
 (define drop
   \* drop N elements from the front of a list *\
@@ -45,11 +49,16 @@ found in functional languages.
   0 AS -> AS
   N [A|AS] -> (drop (- N 1) AS))
 
+(define take-while-aux
+  {(A --> boolean) --> (list A) --> (list A) --> (list A)}
+  _ [] Acc -> (reverse Acc)
+  Fn [A | Rest] Acc -> (take-while-aux Fn Rest [A | Acc]) where (Fn A)
+  _ _ Acc -> (reverse Acc))
+
 (define take-while
   \* take elements of a list while they satisfy a function *\
   {(A --> boolean) --> (list A) --> (list A)}
-  _ [] -> []
-  Fn [A|AS] -> (if (Fn A) [A|(take-while Fn AS)] []))
+  Fn L -> (take-while-aux Fn L []))
 
 (define drop-while
   \* drop elements of a list while they satisfy a function *\
@@ -69,51 +78,69 @@ found in functional languages.
   ___________________
   (list A) : nested;)
 
+(define flatten-aux
+  {nested --> (list A) --> (list A)}
+  [] Acc -> Acc
+  [X | Rest] Acc -> (flatten-aux Rest (flatten-aux X Acc)) where (cons? X)
+  [X | Rest] Acc -> (flatten-aux Rest [X | Acc]))
+
 (define flatten
   \* flatten a list of elements *\
-  {nested --> nested}
+  {nested --> (list A)}
   [] -> []
-  [A|AS] -> (if (cons? A)
-                (flatten (append A AS))
-                [A|(flatten AS)]))
+  L -> (reverse (flatten-aux L [])))
+
+(define filter-aux
+  {(A --> boolean) --> (list A) --> (list A) --> (list A)}
+  Test [] Acc -> (reverse Acc)
+  Test [X | Y] Acc -> (filter-aux Test Y [X | Acc]) where (Test X)
+  Test [X | Y] Acc -> (filter-aux Test Y Acc))
 
 (define filter
   \* return those elements of a list which satisfy a given function *\
   {(A --> boolean) --> (list A) --> (list A)}
-  _  [] -> []
-  Fn [A|AS] -> (if (Fn A)
-                   [A|(filter Fn AS)]
-                   (filter Fn AS)))
+  Test X -> (filter-aux Test X []))
 
 (define complement
   \* return a function which is the complement of the given function *\
   {(A --> boolean) --> (A --> boolean)}
   Fn -> (/. A (not (Fn A))))
 
-(define seperate
-  \* seperate a list into those that do and don't satisfy a boolean function *\
+(define separate-aux
+  {(A --> boolean) --> (list A) --> (list A) --> (list A)
+    --> ((list A) * (list A))}
+  Test [] A1 A2 -> (@p A1 A2)
+  Test [A | Rest] A1 A2 -> (separate-aux Test Rest [A | A1] A2) where (Test A)
+  Test [A | Rest] A1 A2 -> (separate-aux Test Rest A1 [A | A2]))
+
+(define separate
+  \* separate a list into those that do and don't satisfy a boolean function *\
   {(A --> boolean) --> (list A) --> ((list A) * (list A))}
-  Fn AS -> (@p (filter Fn AS) (filter (complement Fn) AS)))
+  Test L -> (separate-aux Test L [] []))
+
+(define zip-aux
+  {(list A) --> (list B) --> (list (A * B)) --> (list (A * B))}
+  _ [] Acc -> (reverse Acc)
+  [] _ Acc -> (reverse Acc)
+  [A | A-rest] [B | B-rest] Acc -> (zip-aux A-rest B-rest [(@p A B) | Acc]))
 
 (define zip
   \* combine two lists returning a list of tuples of their elements *\
   {(list A) --> (list B) --> [(A * B)]}
-  _ [] -> []
-  [] _ -> []
-  [A|AS] [B|BS] -> [(@p A B)|(zip AS BS)])
+  A B -> (zip-aux A B []))
 
 (define indexed-
-  {number --> (list A) --> [(number * A)]}
-  _ [] -> []
-  N [A|AS] -> [(@p N A)|(indexed- (+ N 1) AS)])
+  {number --> (list A) --> (list (number * A)) --> (list (number * A))}
+  _ [] Acc -> (reverse Acc)
+  N [A | AS] Acc -> (indexed- (+ N 1) AS ((@p N A) | Acc)))
 
 (define indexed
   \* return an indexed version of a list *\
-  {(list A) --> [(number * A)]}
-  AS -> (indexed- 0 AS))
+  {(list A) --> (list (number * A))}
+  AS -> (indexed- 0 AS []))
 
 (define reduce
-  \* reduce a functoin over a list *\
+  \* reduce a function over a list *\
   {(A --> B --> B) --> B --> (list A) --> B}
   Fn B [A] -> (Fn A B)
   Fn B [A|AS] -> (reduce Fn (Fn A B) AS))
