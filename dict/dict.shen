@@ -49,7 +49,7 @@ baz
 [bar baz]
 
 *** Code: *\
-(package dict- [dict? dict dict-> <-dict contents keys vals dictionary]
+(package dict- [dict? dict dict-> <-dict contents key? keys vals dictionary]
 
 (datatype dictionary
   Indexes : (list number);
@@ -125,5 +125,11 @@ baz
 (define vals
   {dictionary --> (list B)}
   Dict -> (map (function snd) (contents Dict)))
+
+(define key?
+  {dictionary --> A --> boolean}
+  Dict Key -> (let Store (store Dict)
+                (trap-error (do (<-vector Store (hash Key (limit Store))) true)
+                            (/. E false))))
 
 )
