@@ -1,11 +1,11 @@
 \* Copyright 2010-2011 Vasil S. Diadov
 
-package.shen is free software: you can redistribute it and/or modify
+defpackage.shen is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-package.shen is distributed in the hope that it will be useful,
+defpackage.shen is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -17,7 +17,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 Description
 ===========
-package.shen contains macro for package managment for Shen.
+defpackage.shen contains macro for package managment for Shen.
 Package management allows importing/exporting symbols across packages, to
 introducing package aliases and so on.
 
