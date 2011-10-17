@@ -6,7 +6,8 @@ JavaScript, Scheme, Common Lisp and many others).
 It combines functional programming, pattern-matching, compiler-compiler, 
 declarative programming (almost one-to-one as in prolog) the most powerful 
 type system in one single, and a compact and crossplatform core.
-You may found more information about it on site http://www.lambdassociates.org
+You may found more information about Shen on http://www.shenlanguage.org.
+Information about Shen's predecessor Qi is on http://www.lambdassociates.org.
 
 If you want to share your code with other Shen users then write to 
 vasil.s.d AT gmail.com for details how to do it.
