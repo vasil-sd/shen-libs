@@ -132,7 +132,7 @@ found in functional languages.
 (define indexed-
   {number --> (list A) --> (list (number * A)) --> (list (number * A))}
   _ [] Acc -> (reverse Acc)
-  N [A | AS] Acc -> (indexed- (+ N 1) AS ((@p N A) | Acc)))
+  N [A | AS] Acc -> (indexed- (+ N 1) AS [(@p N A) | Acc]))
 
 (define indexed
   \* return an indexed version of a list *\
