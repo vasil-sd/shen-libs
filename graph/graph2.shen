@@ -72,6 +72,7 @@ size = size of all vertices +            all vertices stored in Vertices dict
 
 *** Code: *\
 (require dict)
+(require sequence)
 
 (datatype graph
   Vertices : dictionary;
@@ -122,8 +123,7 @@ size = size of all vertices +            all vertices stored in Vertices dict
   Vs Edge V -> (let Store (<-address Vs 2)
                     N (hash V (limit Store))
                     VertLst (trap-error (<-vector Store N) (/. E []))
-                    Contents (trap-error (snd (<-vector Store N))
-                                         (/. E (@p true [])))
+                    Contents (trap-error (<-dict Vs V) (/. E (@p true [])))
                  (do (dict-> Vs V (@p (fst Contents)
                                       (adjoin Edge (snd Contents))))
                      (@p N (length VertLst)))))
@@ -142,7 +142,7 @@ size = size of all vertices +            all vertices stored in Vertices dict
              Places (map (update-vert Verts (@p EdgeID (length EdgeLst))) Edge)
           (do (dict-> Edges Edge [Places|EdgeLst]) Edge)))))
 
-(define has-edge
+(define has-edge?
   {graph --> (list A) --> boolean}
   Graph Edge -> (key? (edge-dict Graph) Edge))
 
@@ -161,3 +161,96 @@ size = size of all vertices +            all vertices stored in Vertices dict
 (define resolve-edge
   {graph --> (@p number number) --> A}
   Graph Place -> (resolve (<-address (edge-dict Graph) 2) Place))
+
+(define edges-for
+  {graph --> A --> (list (list A))}
+  Graph Vert -> (map (/. X (fst (resolve-edge Graph X)))
+                     (snd (<-dict (vert-dict Graph) Vert))))
+
+(define neighbors
+  \* Return the neighbors of a vertex *\
+  {graph --> A --> (list A)}
+  Graph Vert -> (unique (mapcon (remove-first Vert) (edges-for Graph Vert))))
+
+(define connected-to-
+  {graph --> (list A) --> (list A) --> (list A)}
+  Graph [] Already -> Already
+  Graph New Already ->
+  (let Reachable (unique (mapcon (neighbors Graph) New))
+       New (difference Reachable Already)
+    (connected-to- Graph New (append New Already))))
+
+(define connected-to
+  \* return all vertices connected to the given vertex, including itself *\
+  {graph --> A --> (list A)}
+  Graph V -> (connected-to- Graph [V] [V]))
+
+(define connected?
+  \* return if a graph is fully connected *\
+  {graph --> boolean}
+  Graph -> (reduce (/. V Acc
+                       (and Acc
+                            (subset? (vertices Graph) (connected-to Graph V))))
+                   true (vertices Graph)))
+
+(define connected-components-
+  \* given a graph return a list of connected components *\
+  {graph --> (list A) --> (list (list A)) --> (list graph)}
+  Graph [] _ -> []
+  Graph VS [] -> (map (/. V (let Component (graph 1 0)
+                              (do (add-vertex Component V true) Component)))
+                      VS)
+  Graph [V|VS] ES ->
+    (let Con-verts (connected-to Graph V)
+         Con-edges (filter (/. E (subset? E Con-verts)) ES)
+         Component (graph (length Con-verts) (length Con-edges))
+      (do (map (/. X (add-edge Component X true)) Con-edges)
+          (cons Component (connected-components- Graph
+                                                 (difference VS Con-verts)
+                                                 (difference ES Con-edges))))))
+
+(define connected-components
+  {graph --> (list graph)}
+  Graph -> (connected-components- Graph (vertices Graph) (edges Graph)))
+
+(define place-vertex
+  \* given a graph, vertex and list of vertex partitions, partition the vertex *\
+  {graph --> A --> (list (list A)) --> (list (list A))}
+  Graph V [] -> (if (element? V (neighbors Graph V))
+                    (simple-error
+                     (make-string "self-loop ~S, no vertex partition" V))
+                    [[V]])
+  Graph V [C|CS] -> (let Neighbors (neighbors Graph V)
+                      (if (element? V Neighbors)
+                          (simple-error
+                           (make-string "self-loop ~S, no vertex partition" V))
+                          (if (empty? (intersection C Neighbors))
+                              [[V|C]|CS]
+                              [C|(place-vertex Graph V CS)]))))
+
+(define vertex-partition
+  \* partition the vertices of a graph *\
+  {graph --> (list (list A))}
+  Graph -> (reduce (place-vertex Graph) [] (vertices Graph)))
+
+(define bipartite?
+  \* check if a graph is bipartite *\
+  {graph --> boolean}
+  Graph -> (= 2 (length (vertex-partition Graph))))
+
+\* simple tests
+
+(set g (graph))
+(add-edge (value g) [chris patton] true)
+(add-edge (value g) [eric chris] true)
+(add-vertex (value g) nobody true)
+(has-edge? (value g) [patton chris])
+(edges-for (value g) chris)
+(neighbors (value g) chris)
+(neighbors (value g) nobody)
+(connected-to (value g) chris)
+(connected? (value g))
+(connected-components (value g))
+(map (function vertices) (connected-components (value g)))
+
+*\
