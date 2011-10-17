@@ -80,6 +80,17 @@ size = size of all vertices +            all vertices stored in Vertices dict
   ===================
   (vector symbol Vertices Edges);)
 
+(package graph- [graph graph? vertices edges add-vertex
+                 add-edge has-edge? has-vertex? edges-for
+                 neighbors connected-to connected? connected-components
+                 vertex-partition bipartite?
+                 \* included from other libraries *\
+                 take drop take-while drop-while range flatten
+                 filter complement seperate zip indexed reduce
+                 mapcon partition partition-with unique frequencies
+                 shuffle pick remove-first interpose subset?
+                 cartesian-product]
+
 (define graph?
   X -> (= graph (<-address X 0)))
 
@@ -146,7 +157,7 @@ size = size of all vertices +            all vertices stored in Vertices dict
   {graph --> (list A) --> boolean}
   Graph Edge -> (key? (edge-dict Graph) Edge))
 
-(define has-vertex
+(define has-vertex?
   {graph --> A --> boolean}
   Graph Vertex -> (key? (vert-dict Graph) Vertex))
 
@@ -237,6 +248,8 @@ size = size of all vertices +            all vertices stored in Vertices dict
   \* check if a graph is bipartite *\
   {graph --> boolean}
   Graph -> (= 2 (length (vertex-partition Graph))))
+
+)
 
 \* simple tests
 
