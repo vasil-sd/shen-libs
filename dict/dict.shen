@@ -99,7 +99,7 @@ baz
 
 (define tassoc
   \* Like `assoc' for lists of tuples. *\
-  _ [] -> []
+  _ [] -> (error "key not found~%")
   X [A|AS] -> (if (= X (fst A)) A (tassoc X AS)))
 
 (define <-dict
@@ -129,7 +129,9 @@ baz
 (define key?
   {dictionary --> A --> boolean}
   Dict Key -> (let Store (store Dict)
-                (trap-error (do (<-vector Store (hash Key (limit Store))) true)
-                            (/. E false))))
+                (trap-error
+                 (do (tassoc Key (<-vector Store (hash Key (limit Store))))
+                     true)
+                 (/. E false))))
 
 )
