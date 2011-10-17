@@ -57,39 +57,44 @@ accessors:
   __________________
   (head X) : symbol;)
 
-(define capitalize
+(define char-upcase
   {string --> string}
-  (@s "a" S) -> (@s "A" S)
-  (@s "b" S) -> (@s "B" S)
-  (@s "c" S) -> (@s "C" S)
-  (@s "d" S) -> (@s "D" S)
-  (@s "e" S) -> (@s "E" S)
-  (@s "f" S) -> (@s "F" S)
-  (@s "g" S) -> (@s "G" S)
-  (@s "h" S) -> (@s "H" S)
-  (@s "i" S) -> (@s "I" S)
-  (@s "j" S) -> (@s "J" S)
-  (@s "k" S) -> (@s "K" S)
-  (@s "l" S) -> (@s "L" S)
-  (@s "m" S) -> (@s "M" S)
-  (@s "n" S) -> (@s "N" S)
-  (@s "o" S) -> (@s "O" S)
-  (@s "p" S) -> (@s "P" S)
-  (@s "q" S) -> (@s "Q" S)
-  (@s "r" S) -> (@s "R" S)
-  (@s "s" S) -> (@s "S" S)
-  (@s "t" S) -> (@s "T" S)
-  (@s "u" S) -> (@s "U" S)
-  (@s "v" S) -> (@s "V" S)
-  (@s "w" S) -> (@s "W" S)
-  (@s "x" S) -> (@s "X" S)
-  (@s "y" S) -> (@s "Y" S)
-  (@s "z" S) -> (@s "Z" S)
+  "a" -> "A"
+  "b" -> "B"
+  "c" -> "C"
+  "d" -> "D"
+  "e" -> "E"
+  "f" -> "F"
+  "g" -> "G"
+  "h" -> "H"
+  "i" -> "I"
+  "j" -> "J"
+  "k" -> "K"
+  "l" -> "L"
+  "m" -> "M"
+  "n" -> "N"
+  "o" -> "O"
+  "p" -> "P"
+  "q" -> "Q"
+  "r" -> "R"
+  "s" -> "S"
+  "t" -> "T"
+  "u" -> "U"
+  "v" -> "V"
+  "w" -> "W"
+  "x" -> "X"
+  "y" -> "Y"
+  "z" -> "Z"
+  S -> S)
+
+(define string-capitalize
+  {string --> string}
+  (@s C S) -> (@s (char-upcase C) S)
   S -> S)
 
 (define sym-capitalize
   {symbol --> symbol}
-  X -> (intern (capitalize (str X))))
+  X -> (intern (string-capitalize (str X))))
 
 (define slot-type
   Type I Stype Acc -> (let A (intern "A")
