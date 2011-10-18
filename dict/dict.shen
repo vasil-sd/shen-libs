@@ -49,13 +49,14 @@ baz
 [bar baz]
 
 *** Code: *\
-(package dict- [dict? dict dict-> <-dict contents key? keys vals dictionary]
-
 (datatype dictionary
   Indexes : (list number);
   Store : (vector (list (@p A B)));
   ======================
   (absvector symbol Keys Store) : dictionary;)
+
+(package dict- [dict? dict dict-> <-dict contents key? keys vals
+                make-dict dictionary]
 
 (define dict?
   {A --> boolean}
