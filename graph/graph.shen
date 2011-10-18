@@ -60,6 +60,20 @@ structure are given below.
  +-------------------+      9 |  i  -> [2]
                            10 |  j  -> []
 
+
+--G=<graph Vertices Edges>-------Graph with associated edge/vertex data---------
+                            Vertices                    Edges
+                           ----------                  -------
+ +----Graph G-----+      hash | key -> value        hash |  key  -> value
+ |   4   6     7  |      -----+------>--------      -----+-------->---------
+ |0a---b---c   g  |         1 |  a  -> (@p 0 [1])      1 | [a b] -> (@p 4 [1 2])
+ |    1|  3|      |         2 |  b  -> [1 2 3]         2 | [b c] -> (@p 6 [2 3])
+ |     d---e---f  |         3 |  c  -> [2 4]           3 | [b d] -> (@p 1 [2 4])
+ |       2   5    |         4 |  d  -> [3 5]           4 | [c e] -> (@p 3 [3 5])
+ +----------------+         5 |  e  -> [4 5 6]         5 | [d e] -> (@p 2 [4 5])
+                            6 |  f  -> [6]             6 | [e f] -> (@p 5 [5 6])
+                            7 |  g  -> (@p 7 [])
+
 V = # of vertices
 E = # of edges
 M = # of vertex edge associations
@@ -84,12 +98,15 @@ size = size of all vertices +            all vertices stored in Vertices dict
                  add-edge has-edge? has-vertex? edges-for
                  neighbors connected-to connected? connected-components
                  vertex-partition bipartite?
-                 \* included from other libraries *\
+                 \* included from the sequence library\ *\
                  take drop take-while drop-while range flatten
                  filter complement seperate zip indexed reduce
                  mapcon partition partition-with unique frequencies
                  shuffle pick remove-first interpose subset?
-                 cartesian-product]
+                 cartesian-product
+                 \* included from the dict library\ *\
+                 dict? dict dict-> <-dict contents key? keys vals
+                 dictionary make-dict]
 
 (define graph?
   X -> (= graph (<-address X 0)))
@@ -100,8 +117,8 @@ size = size of all vertices +            all vertices stored in Vertices dict
   Vertsize Edgesize ->
     (let Graph (absvector 3)
       (do (address-> Graph 0 graph)
-          (address-> Graph 1 (dict Vertsize))
-          (address-> Graph 2 (dict Edgesize))
+          (address-> Graph 1 (make-dict Vertsize))
+          (address-> Graph 2 (make-dict Edgesize))
           Graph)))
 
 (defmacro graph-macro
@@ -122,44 +139,16 @@ size = size of all vertices +            all vertices stored in Vertices dict
   {graph --> (list (list A))}
   Graph -> (keys (edge-dict Graph)))
 
-(define add-vertex
-  \* add a vertex to a graph *\
-  {graph --> A --> B --> A}
-  Graph V Data -> (let Edges (trap-error (snd (<-dict (vert-dict Graph) V))
-                                         (/. E {}))
-                    (dict-> (vert-dict Graph) V (@p Data []))))
+(define get-data
+  Value V -> (if (tuple? Value)
+                 (fst Value)
+                 (error (make-string "no data for ~S~%" V))))
 
-(define update-vert
-  {vector --> (@p number number) --> A --> number}
-  Vs Edge V -> (let Store (<-address Vs 2)
-                    N (hash V (limit Store))
-                    VertLst (trap-error (<-vector Store N) (/. E []))
-                    Contents (trap-error (<-dict Vs V) (/. E (@p true [])))
-                 (do (dict-> Vs V (@p (fst Contents)
-                                      (adjoin Edge (snd Contents))))
-                     (@p N (length VertLst)))))
+(define vertex-data
+  Graph V -> (get-data (<-dict (vert-dict Graph) V) V))
 
-(define add-edge
-  \* add an edge to a graph *\
-  {graph --> (list A) --> B --> (list A)}
-  Graph Edge Data ->
-  (let Edges (edge-dict Graph)
-    (if (key? Edges Edge)
-        Edge
-        (let Store (<-address Edges 2)
-             EdgeID (hash Edge (limit Store))
-             EdgeLst (trap-error (<-vector Store EdgeID) (/. E []))
-             Verts (vert-dict Graph)
-             Places (map (update-vert Verts (@p EdgeID (length EdgeLst))) Edge)
-          (do (dict-> Edges Edge [Places|EdgeLst]) Edge)))))
-
-(define has-edge?
-  {graph --> (list A) --> boolean}
-  Graph Edge -> (key? (edge-dict Graph) Edge))
-
-(define has-vertex?
-  {graph --> A --> boolean}
-  Graph Vertex -> (key? (vert-dict Graph) Vertex))
+(define edge-data
+  Graph V -> (get-data (<-dict (edge-dict Graph) V) V))
 
 (define resolve
   {(vector (list A)) --> (@p number number) --> A}
@@ -175,8 +164,63 @@ size = size of all vertices +            all vertices stored in Vertices dict
 
 (define edges-for
   {graph --> A --> (list (list A))}
-  Graph Vert -> (map (/. X (fst (resolve-edge Graph X)))
-                     (snd (<-dict (vert-dict Graph) Vert))))
+  Graph Vert -> (let Val (trap-error (<-dict (vert-dict Graph) Vert) (/. E []))
+                     Edges (if (tuple? Val) (snd Val) Val)
+                  (map (lambda X (fst (resolve-edge Graph X))) Val)))
+
+(define add-vertex-w-data
+  \* add a vertex to a graph *\
+  {graph --> A --> B --> A}
+  G V Data -> (do (dict-> (vert-dict G) V (@p Data (edges-for G V))) V))
+
+(define add-vertex-w/o-data
+  \* add a vertex to a graph *\
+  {graph --> A --> B --> A}
+  G V -> (do (dict-> (vert-dict G) V (edges-for G V)) V))
+
+(defmacro add-vertex-macro
+  [add-vertex G V]   -> [add-vertex-w/o-data G V]
+  [add-vertex G V D] -> [add-vertex-w-data G V D])
+
+(define update-vert
+  \* in a dict, add an edge to a vertex's edge list *\
+  {vector --> (@p number number) --> A --> number}
+  Vs Edge V -> (let Store (<-address Vs 2)
+                    N (hash V (limit Store))
+                    VertLst (trap-error (<-vector Store N) (/. E []))
+                    Contents (trap-error (<-dict Vs V) (/. E []))
+                 (do (dict-> Vs V (if (tuple? Contents)
+                                      (@p (fst Contents)
+                                          (adjoin Edge (snd Contents)))
+                                      (adjoin Edge Contents)))
+                     (@p N (length VertLst)))))
+
+(define update-edges-vertices
+  \* add an edge to a graph *\
+  {graph --> (list A) --> (list A)}
+  Graph Edge ->
+  (let Store (<-address (edge-dict Graph) 2)
+       EdgeID (hash Edge (limit Store))
+       EdgeLst (trap-error (<-vector Store EdgeID) (/. E []))
+    (map (update-vert (vert-dict Graph) (@p EdgeID (length EdgeLst))) Edge)))
+
+(define add-edge-w-data
+  G E D -> (do (dict-> (edge-dict G) E (@p D (update-edges-vertices G E))) E))
+
+(define add-edge-w/o-data
+  G E -> (do (dict-> (edge-dict G) E (update-edges-vertices G E)) E))
+
+(defmacro add-edge-macro
+  [add-edge G E]   -> [add-edge-w/o-data G E]
+  [add-edge G E V] -> [add-edge-w-data G E V])
+
+(define has-edge?
+  {graph --> (list A) --> boolean}
+  Graph Edge -> (key? (edge-dict Graph) Edge))
+
+(define has-vertex?
+  {graph --> A --> boolean}
+  Graph Vertex -> (key? (vert-dict Graph) Vertex))
 
 (define neighbors
   \* Return the neighbors of a vertex *\
@@ -209,13 +253,13 @@ size = size of all vertices +            all vertices stored in Vertices dict
   {graph --> (list A) --> (list (list A)) --> (list graph)}
   Graph [] _ -> []
   Graph VS [] -> (map (/. V (let Component (graph 1 0)
-                              (do (add-vertex Component V true) Component)))
+                              (do (add-vertex Component V) Component)))
                       VS)
   Graph [V|VS] ES ->
     (let Con-verts (connected-to Graph V)
          Con-edges (filter (/. E (subset? E Con-verts)) ES)
          Component (graph (length Con-verts) (length Con-edges))
-      (do (map (/. X (add-edge Component X true)) Con-edges)
+      (do (map (add-edge-w/o-data Component) Con-edges)
           (cons Component (connected-components- Graph
                                                  (difference VS Con-verts)
                                                  (difference ES Con-edges))))))
@@ -225,7 +269,7 @@ size = size of all vertices +            all vertices stored in Vertices dict
   Graph -> (connected-components- Graph (vertices Graph) (edges Graph)))
 
 (define place-vertex
-  \* given a graph, vertex and list of vertex partitions, partition the vertex *\
+  \* given a graph, vertex and list of partitions, partition the vertex *\
   {graph --> A --> (list (list A)) --> (list (list A))}
   Graph V [] -> (if (element? V (neighbors Graph V))
                     (simple-error
@@ -254,16 +298,16 @@ size = size of all vertices +            all vertices stored in Vertices dict
 \* simple tests
 
 (set g (graph))
-(add-edge (value g) [chris patton] true)
-(add-edge (value g) [eric chris] true)
-(add-vertex (value g) nobody true)
+(add-edge (value g) [chris patton])
+(add-edge (value g) [eric chris])
+(add-vertex (value g) nobody)
 (has-edge? (value g) [patton chris])
 (edges-for (value g) chris)
 (neighbors (value g) chris)
 (neighbors (value g) nobody)
 (connected-to (value g) chris)
 (connected? (value g))
-(connected-components (value g))
+(connected-components (value g)) <- fail when package wrapper is used
 (map (function vertices) (connected-components (value g)))
 
 *\
