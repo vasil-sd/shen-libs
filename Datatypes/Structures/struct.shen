@@ -13,7 +13,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with defstruct.  If not, see <http://www.gnu.org/licenses/>.
 
-
 Description
 ===========
 defstruct allows defining typed records stored for efficiency as vectors.
@@ -39,10 +38,10 @@ setters:
 
 accessors:
 
-  <-person-name : (person --> string)
-  <-person-last-name : (person --> string)
-  <-person-gender : (person --> symbol)
-  <-person-age: (person --> number)
+  person-name : (person --> string)
+  person-last-name : (person --> string)
+  person-gender : (person --> symbol)
+  person-age: (person --> number)
 
 *\
 
@@ -137,7 +136,7 @@ accessors:
              Slots
              (+ I 1)
              (let X (intern "X")
-                  N (intern (cn "<-" (cn (str Type) (cn "-" (str Sname)))))
+                  N (intern (cn (str Type) (cn "-" (str Sname))))
                [[define N
                   { Type --> Stype }
                   X -> [<-vector X I]]
