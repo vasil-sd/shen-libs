@@ -54,18 +54,18 @@
 
 (datatype module-types
 
-  __________________
+  ___________
   [] : entry;
 
   X : symbol; F : module-desc;
   ============================
   [X | F] : entry;
 
-  _______________________________________
+  _________________________________
   (value *modules*) : (list entry);
 
   X : (list entry);
-  ________________________________________
+  _________________________________
   (set *modules* X) : (list entry);
 
   ________________________________________
@@ -89,11 +89,6 @@
 (set *loaded-modules* [])
 (set *modules* [])
 (set *modules-paths* ["root/"])
-
-(define load-native
-  {string --> boolean}
-  S -> (error "No native loader is defined yet.")
-  _ -> false)
 
 (define module-loaded?
   {symbol --> boolean}
@@ -253,19 +248,24 @@
   {(list symbol) --> (symbol --> boolean) --> boolean}
   Mods Fn -> (walk-tree* (resolve-deps Mods) Fn [] true))
 
+(define load-native
+  {string --> boolean}
+  S -> (error "No native loader is defined yet.")
+  _ -> false)
+
 (define load-module-files
   {(list string) --> boolean}
   [] -> true
   [F | Files] -> (do (load F)
                      (load-module-files Files)))
 
-(define load-module**
+(define load-module*
   {symbol --> symbol --> (list string) --> boolean}
   _ null [] -> false
   M null Files -> (load-module-files Files)
   M Fn _ -> ((module-load-fn Fn) (value *home-directory*)))
 
-(define load-module*
+(define load-module
   {symbol --> module-desc --> boolean}
   _ [] -> false
   M _ -> true where (module-loaded? M)
@@ -273,7 +273,7 @@
                  L (module-str-list load Desc)
               (in-directory
                 (module-str path Desc)
-                (/. _ (if (load-module** M F L)
+                (/. _ (if (load-module* M F L)
                           (do (set *loaded-modules*
                                    [M | (value *loaded-modules*)])
                               true)
@@ -281,13 +281,9 @@
                 (/. E (do (error (error-to-string E))
                           false)))))
 
-(define load-module
-  {symbol --> boolean}
-  M -> (load-module* M (find-module M)))
-
 (define use-modules
   {(list symbol) --> boolean}
-  M -> (walk-tree M load-module))
+  M -> (walk-tree M (/. X (load-module X (find-module X)))))
 
 (define dump-native
   {symbol --> symbol --> string --> string --> boolean}
