@@ -1,6 +1,6 @@
 (package module-
          [name depends load load-fn dump dump-fn path use-module
-          *modules-paths* find-module use-module dump-module register-module
+          *modules-paths* find-module use-modules dump-module register-module
           forget-module load-native dump-native]
 
 (datatype module-desc
@@ -132,8 +132,8 @@
   X -> (error "There is no function ~S~%"))
 
 (define module-dump-fn
-  {symbol --> (symbol --> string --> boolean)}
-  X -> (function X) where (not (= (arity X) 2))
+  {symbol --> (symbol --> symbol --> string --> boolean)}
+  X -> (function X) where (not (= (arity X) 3))
   X -> (error "There is no function ~S~%"))
 
 (define module-entry-key
@@ -159,11 +159,18 @@
   P D -> (append D [[path : P]]) where (= (module-str path D) "")
   P D -> D)
 
+(define forget-module-manifest
+  {symbol --> (list entry) --> (list entry) --> (list entry)}
+  M [] Acc -> (set *modules* Acc)
+  M [[M | _] | L] Acc -> (forget-module-manifest M L Acc)
+  M [X | L] Acc -> (forget-module-manifest M L [X | Acc]))
+
 (define add-module!
   {symbol --> module-desc --> symbol}
   null Def -> (error "Module name is not specified.~%")
   Name Def -> (let D (set-module-path-if-absent (value *home-directory*) Def)
-                (do (set *modules* [[Name | D] | (value *modules*)])
+                (do (forget-module-manifest Name (value *modules*) [])
+                    (set *modules* [[Name | D] | (value *modules*)])
                     Name)))
 
 (define register-module
@@ -179,22 +186,46 @@
   M -> false where (= (find-module M) [])
   _ -> true)
 
-(define load-module-manifest
+(define in-directory
+  {string --> (string --> A) --> (error --> A) --> A}
+  S F E -> (let Pwd (value *home-directory*)
+             (trap-error (let Path (cd S)
+                              Ret (F Path)
+                              Path2 (cd Pwd)
+                           Ret)
+                         (/. Err (do (cd Pwd)
+                                     (E Err))))))
+
+(define manifest-exists?
+  {string --> boolean}
+  M P -> (in-directory (cn P (str M))
+                       (/. P (let P (open file (cn (str M) ".shen") in)
+                                  R (close P)
+                                true))
+                       (/. E false)))
+
+(define load-manifest*
+  {symbol --> string --> boolean}
+  M D -> (fail) where (not (manifest-exists? M D))
+  M D -> (in-directory (cn D (str M))
+                       (/. P (do (load (cn (str M) ".shen"))
+                                 (if (module-known? M)
+                                     true
+                                     (fail))))
+                       (/. E (do (error "~A/~A.shen: ~S"
+                                        D M (error-to-string E))
+                                 false))))
+
+(define load-manifest
   {symbol --> (list string) --> boolean}
   M [] -> false
-  M [P | Path] -> (let Pwd (value *home-directory*)
-                    (trap-error
-                      (do (cd (cn P (str M)))
-                          (load (cn (str M) ".shen"))
-                          (cd Pwd)
-                          (module-known? M))
-                      (/. E (do (cd Pwd)
-                                false)))))
+  M [P | Path] <- (load-manifest* M P)
+  M [P | Path] -> (load-manifest M Path))
 
 (define resolve-deps-aux*
   {(list symbol) --> symbol --> module-desc --> (list symbol)
    --> (list symbol)}
-  Acc M [] Deps -> (if (load-module-manifest M (value *modules-paths*))
+  Acc M [] Deps -> (if (load-manifest M (value *modules-paths*))
                        (resolve-deps-aux* Acc M (find-module M) Deps)
                        (error "Unable to find module ~S~%" M))
   Acc M Desc Deps -> (let D (module-deps Desc)
@@ -210,18 +241,17 @@
   {(list symbol) --> (list symbol)}
   Deps -> (resolve-deps-aux [] Deps))
 
-(define walk-tree-aux
+(define walk-tree*
   {(list symbol) --> (symbol --> boolean) --> (list symbol) --> boolean
    --> boolean}
   _ _ _ false -> false
   [] _ _ Res -> Res
-  [M | Mods] Fn Acc Res -> (walk-tree-aux Mods Fn Acc Res)
-                           where (element? M Acc)
-  [M | Mods] Fn Acc Res -> (walk-tree-aux Mods Fn [M | Acc] (Fn M)))
+  [M | Mods] Fn Acc Res -> (walk-tree* Mods Fn Acc Res) where (element? M Acc)
+  [M | Mods] Fn Acc Res -> (walk-tree* Mods Fn [M | Acc] (Fn M)))
 
-(define walk-module-tree
+(define walk-tree
   {(list symbol) --> (symbol --> boolean) --> boolean}
-  Mods Fn -> (walk-tree-aux (resolve-deps Mods) Fn [] true))
+  Mods Fn -> (walk-tree* (resolve-deps Mods) Fn [] true))
 
 (define load-module-files
   {(list string) --> boolean}
@@ -229,78 +259,75 @@
   [F | Files] -> (do (load F)
                      (load-module-files Files)))
 
-(define load-module-aux*
+(define load-module**
   {symbol --> symbol --> (list string) --> boolean}
   _ null [] -> false
   M null Files -> (load-module-files Files)
   M Fn _ -> ((module-load-fn Fn) (value *home-directory*)))
 
-(define load-module-aux
+(define load-module*
   {symbol --> module-desc --> boolean}
   _ [] -> false
   M _ -> true where (module-loaded? M)
   M Desc -> (let F (module-sym load-fn Desc)
                  L (module-str-list load Desc)
-                 Pwd (value *home-directory*)
-              (do (cd (module-str path Desc))
-                  (let Res (load-module-aux* M F L)
-                    (do (cd Pwd)
-                        (set *loaded-modules* [M | (value *loaded-modules*)])
-                        Res)))))
+              (in-directory
+                (module-str path Desc)
+                (/. _ (if (load-module** M F L)
+                          (do (set *loaded-modules*
+                                   [M | (value *loaded-modules*)])
+                              true)
+                          false))
+                (/. E (do (error (error-to-string E))
+                          false)))))
 
 (define load-module
   {symbol --> boolean}
-  M -> (load-module-aux M (find-module M)))
+  M -> (load-module* M (find-module M)))
 
-(define use-module
-  {symbol --> boolesn}
-  M -> (walk-module-tree [M] load-module))
+(define use-modules
+  {(list symbol) --> boolean}
+  M -> (walk-tree M load-module))
 
 (define dump-native
-  {symbol --> string --> string --> boolean}
-  Target Dir F -> (error "No native loader is defined yet.")
-  _ _ _ -> false)
+  {symbol --> symbol --> string --> string --> boolean}
+  Lang Impl Dir F -> (error "No native loader is defined yet.")
+  _ _ _ _ -> false)
 
 (define dump-module-files
-  {symbol --> string --> (list string) --> boolean}
-  Target Dir [] -> true
-  Target Dir [F | Files] -> (do (load F)
-                                (dump-native Target Dir F)
-                                (dump-module-files Target Dir Files)))
+  {symbol --> symbol --> string --> (list string) --> boolean}
+  Lang Impl Dir [] -> true
+  Lang Impl Dir [F | Files] -> (do (load F)
+                                   (dump-native Lang Impl Dir F)
+                                   (dump-module-files Lang Impl Dir Files)))
 
-(define dump-module-aux*
-  {symbol --> string --> symbol --> symbol --> (list string)
+(define dump***
+  {symbol --> symbol --> string --> symbol --> symbol --> (list string)
    --> (list string) --> boolean}
-  _ _ _ null [] [] -> false
-  Target Dir M null [] L-files -> (dump-module-files Target Dir L-files)
-  Target Dir M null D-files _ -> (dump-module-files Target Dir D-files)
-  Target Dir M Fn _ _ -> ((module-dump-fn Fn) Target Dir))
+  _ _ _ _ null [] [] -> false
+  Lang Impl Dir M null [] L-files -> (dump-module-files Lang Impl Dir L-files)
+  Lang Impl Dir M null D-files _ -> (dump-module-files Lang Impl Dir D-files)
+  Lang Impl Dir M Fn _ _ -> ((module-dump-fn Fn) Lang Impl Dir))
 
-(define dump-module-aux
-  {symbol --> string --> symbol --> module-desc --> boolean}
-  _ _ _ [] -> false
-  Target Dir M Desc -> (let F (module-sym dump-fn Desc)
-                            D (module-str-list dump Desc)
-                            L (module-str-list load Desc)
-                            Pwd (value *home-directory*)
-                         (do (cd (module-str path Desc))
-                             (let Res (dump-module-aux* Target Dir M F D L)
-                               (do (cd Pwd)
-                                   Res)))))
+(define dump**
+  {symbol --> symbol --> string --> symbol --> module-desc --> boolean}
+  _ _ _ _ [] -> false
+  Lang Impl Dir M Desc -> (let F (module-sym dump-fn Desc)
+                               D (module-str-list dump Desc)
+                               L (module-str-list load Desc)
+                            (in-directory
+                              (module-str path Desc)
+                              (/. _ (dump*** Lang Impl Dir M F D L))
+                              (/. E (do (error (error-to-string E))
+                                        false)))))
 
-(define dump-module*
+(define dump*
   {symbol --> string --> symbol --> boolean}
-  Target Dir M -> (dump-module-aux Target Dir M (find-module M)))
+  Lang Impl Dir M -> (dump** Lang Impl Dir M (find-module M)))
 
 (define dump-module
-  {symbol --> symbol --> string --> boolean}
-  M Target Dir -> (walk-module-tree [M] (dump-module* Target Dir)))
-
-(define forget-module-manifest
-  {symbol --> (list entry) --> (list entry) --> (list entry)}
-  M [] Acc -> (set *modules* Acc)
-  M [[M | _] | L] Acc -> (forget-module-manifest M L Acc)
-  M [X | L] Acc -> (forget-module-manifest M L [X | Acc]))
+  {symbol --> symbol --> symbol --> string --> boolean}
+  M Lang Impl Dir -> (walk-tree [M] (dump* Lang Impl Dir)))
 
 (define forget-module
   {symbol --> boolean --> boolean}
