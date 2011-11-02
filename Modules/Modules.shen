@@ -330,7 +330,7 @@
 (define dump-module
   {symbol --> symbol --> symbol --> string --> boolean}
   M Lang Impl Dir -> (walk-tree [M] (dump* Lang Impl Dir))
-                     where (element? M (value *loaded-modules*))
+                     where (module-loaded? M)
   M _ _ _ -> (error "Dump error: module ~S is not loaded.~%" M))
 
 (define forget-module*
@@ -347,7 +347,9 @@
             F (module-sym unload-fn D)
             L (set *loaded-modules* (remove M (value *loaded-modules*)))
             R (forget-module-manifest M (value *modules*) [])
-         (forget-module* M D F)))
+         (forget-module* M D F))
+       where (module-loaded? M)
+  _ -> true)
 
 (define reload-module
   {symbol --> boolean}
