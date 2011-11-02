@@ -3,13 +3,17 @@
           *modules-paths* find-module use-modules dump-module register-module
           reload-module list-modules load-native dump-native]
 
+(synonyms load-fn (string --> boolean)
+          dump-fn (symbol --> (symbol --> (string --> boolean)))
+          exception error)
+
 (datatype module-desc
   X : symbol;
   ==============================
   [name : X] : module-desc-item;
 
   X : (list symbol);
-  ================================
+  ===================================
   [depends : | X] : module-desc-item;
 
   X : (list string);
@@ -21,18 +25,30 @@
   [dump : | X] : module-desc-item;
 
   X : symbol;
-  ================================
+  _________________________________
   [load-fn : X] : module-desc-item;
 
+  X : load-fn >> P;
+  ______________________________________
+  [load-fn : X] : module-desc-item >> P;
+
   X : symbol;
-  ================================
+  ___________________________________
   [unload-fn : X] : module-desc-item;
 
+  X : load-fn >> P;
+  ________________________________________
+  [unload-fn : X] : module-desc-item >> P;
+
   X : symbol;
-  ================================
+  _________________________________
   [dump-fn : X] : module-desc-item;
 
-  if (not (element? X [name depends load dump load-fn dump-fn]))
+  X : dump-fn >> P;
+  ______________________________________
+  [dump-fn : X] : module-desc-item >> P;
+
+  if (not (element? X [name depends load dump load-fn unload-fn dump-fn]))
   X : symbol; Y : string;
   ===========================
   [X : Y] : module-desc-item;
@@ -121,20 +137,31 @@
   {symbol --> module-desc --> symbol}
   _ [] -> null
   name [[name : F] | _] -> F
-  load-fn [[load-fn : F] | _] -> F
-  unload-fn [[unload-fn : F] | _] -> F
-  dump-fn [[dump-fn : F] | _] -> F
   T [_ | R] -> (module-sym T R))
 
+(define null-load-fn
+  {string --> boolean}
+  _ -> false)
+
 (define module-load-fn
-  {symbol --> (string --> boolean)}
-  X -> (function X) where (not (= (arity X) 1))
-  X -> (error "There is no function ~S~%"))
+  {symbol --> module-desc --> load-fn}
+  _ [] -> null-load-fn
+  load-fn [[load-fn : F] | _] -> F where (= (arity F) 1)
+  load-fn [[load-fn : F] | _] -> (error "Wrong load function ~S.~%" F)
+  unload-fn [[unload-fn : F] | _] -> F where (= (arity F) 1)
+  unload-fn [[unload-fn : F] | _] -> (error "Wrong unload function ~S.~%" F)
+  T [_ | R] -> (module-load-fn T R))
+
+(define null-dump-fn
+  {symbol --> symbol --> string --> boolean}
+  _ _ _ -> false)
 
 (define module-dump-fn
-  {symbol --> (symbol --> symbol --> string --> boolean)}
-  X -> (function X) where (not (= (arity X) 3))
-  X -> (error "There is no function ~S~%"))
+ {symbol --> (module-desc --> dump-fn)}
+  _ [] -> null-dump-fn
+  dump-fn [[dump-fn : F] | _] -> F where (= (arity F) 4)
+  dump-fn [[dump-fn : F] | _] -> (error "Wrong dump function ~S.~%" F)
+  T [_ | R] -> (module-dump-fn T R))
 
 (define module-entry-key
   {entry --> symbol}
@@ -180,7 +207,7 @@
   [] -> (error "Wrong module definition.~%")
   Def -> (error "Module load files or load-fn method is not defined.~%")
          where (and (empty? (module-str-list load Def))
-                    (= (module-sym load-fn Def) null))
+                    (= (module-load-fn load-fn Def) null-load-fn))
   Def -> (add-module! (module-sym name Def) Def))
 
 (define module-known?
@@ -189,7 +216,7 @@
   _ -> true)
 
 (define in-directory
-  {string --> (string --> A) --> (error --> A) --> A}
+  {string --> (string --> A) --> (exception --> A) --> A}
   S F E -> (let Pwd (value *home-directory*)
              (trap-error (let Path (cd S)
                               Ret (F Path)
@@ -199,7 +226,7 @@
                                      (E Err))))))
 
 (define manifest-exists?
-  {string --> boolean}
+  {symbol --> string --> boolean}
   M P -> (in-directory (cn P (str M))
                        (/. P (let P (open file (cn (str M) ".shen") in)
                                   R (close P)
@@ -208,20 +235,17 @@
 
 (define load-manifest*
   {symbol --> string --> boolean}
-  M D -> (fail) where (not (manifest-exists? M D))
+  M D -> false where (not (manifest-exists? M D))
   M D -> (in-directory (cn D (str M))
                        (/. P (do (load (cn (str M) ".shen"))
-                                 (if (module-known? M)
-                                     true
-                                     (fail))))
-                       (/. E (do (error "~A/~A.shen: ~S"
-                                        D M (error-to-string E))
-                                 false))))
+                                 (module-known? M)))
+                       (/. E (error "~A/~A.shen: ~S"
+                                        D M (error-to-string E)))))
 
 (define load-manifest
   {symbol --> (list string) --> boolean}
   M [] -> false
-  M [P | Path] <- (load-manifest* M P)
+  M [P | Path] <- (fail-if (/. X (not X)) (load-manifest* M P))
   M [P | Path] -> (load-manifest M Path))
 
 (define resolve-deps-aux*
@@ -267,16 +291,16 @@
                      (load-module-files Files)))
 
 (define load-module*
-  {symbol --> symbol --> (list string) --> boolean}
-  _ null [] -> false
-  M null Files -> (load-module-files Files)
-  M Fn _ -> ((module-load-fn Fn) (value *home-directory*)))
+  {symbol --> load-fn --> (list string) --> boolean}
+  _ null-load-fn [] -> false
+  M null-load-fn Files -> (load-module-files Files)
+  M Fn _ -> (Fn (value *home-directory*)))
 
 (define load-module
   {symbol --> module-desc --> boolean}
   _ [] -> false
   M _ -> true where (module-loaded? M)
-  M Desc -> (let F (module-sym load-fn Desc)
+  M Desc -> (let F (module-load-fn load-fn Desc)
                  L (module-str-list load Desc)
               (in-directory
                 (module-str path Desc)
@@ -285,8 +309,7 @@
                                    [M | (value *loaded-modules*)])
                               true)
                           false))
-                (/. E (do (error (error-to-string E))
-                          false)))))
+                (/. E (error (error-to-string E))))))
 
 (define use-modules
   {(list symbol) --> boolean}
@@ -303,28 +326,29 @@
   Lang Impl Dir [F | Files] -> (do (dump-native Lang Impl Dir F)
                                    (dump-module-files Lang Impl Dir Files)))
 
+\*
 (define dump***
-  {symbol --> symbol --> string --> symbol --> symbol --> (list string)
+  {symbol --> symbol --> string --> symbol --> dump-fn --> (list string)
    --> (list string) --> boolean}
-  _ _ _ _ null [] [] -> false
-  Lang Impl Dir M null [] L-files -> (dump-module-files Lang Impl Dir L-files)
-  Lang Impl Dir M null D-files _ -> (dump-module-files Lang Impl Dir D-files)
-  Lang Impl Dir M Fn _ _ -> ((module-dump-fn Fn) Lang Impl Dir))
+  _ _ _ _ null-dump-fn [] [] -> false
+  Lang Impl Dir M Fn _ _ -> (Fn Lang Impl Dir)
+                            where (not (= Fn null-dump-fn))
+  Lang Impl Dir M _ [] L-files -> (dump-module-files Lang Impl Dir L-files)
+  Lang Impl Dir M _ D-files _ -> (dump-module-files Lang Impl Dir D-files))
 
 (define dump**
   {symbol --> symbol --> string --> symbol --> module-desc --> boolean}
   _ _ _ _ [] -> false
-  Lang Impl Dir M Desc -> (let F (module-sym dump-fn Desc)
+  Lang Impl Dir M Desc -> (let F (module-dump-fn dump-fn Desc)
                                D (module-str-list dump Desc)
                                L (module-str-list load Desc)
                             (in-directory
                               (module-str path Desc)
                               (/. _ (dump*** Lang Impl Dir M F D L))
-                              (/. E (do (error (error-to-string E))
-                                        false)))))
+                              (/. E (error (error-to-string E))))))
 
 (define dump*
-  {symbol --> string --> symbol --> boolean}
+  {symbol --> symbol --> string --> symbol --> boolean}
   Lang Impl Dir M -> (dump** Lang Impl Dir M (find-module M)))
 
 (define dump-module
@@ -334,17 +358,17 @@
   M _ _ _ -> (error "Dump error: module ~S is not loaded.~%" M))
 
 (define forget-module*
-  {symbol --> symbol --> boolean}
+  {symbol --> module-desc --> load-fn --> boolean}
   M [] _ -> true
-  M _ null -> true
-  M Desc F -> (in-directory (module-str path Desc)
-                            ((module-load-fn F))
-                            (/. E (error (error-to-string E)))))
+  M _ null-load-fn -> true
+  M Desc Fn -> (in-directory (module-str path Desc)
+                             Fn
+                             (/. E (error (error-to-string E)))))
 
 (define forget-module
   {symbol --> boolean}
   M -> (let D (find-module M)
-            F (module-sym unload-fn D)
+            F (module-load-fn unload-fn D)
             L (set *loaded-modules* (remove M (value *loaded-modules*)))
             R (forget-module-manifest M (value *modules*) [])
          (forget-module* M D F))
