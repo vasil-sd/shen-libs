@@ -1,7 +1,7 @@
 (package module-
-         [name depends load load-fn dump dump-fn path use-module
+         [name depends load load-fn unload-fn dump dump-fn path loaded all
           *modules-paths* find-module use-modules dump-module register-module
-          forget-module load-native dump-native]
+          reload-module list-modules load-native dump-native]
 
 (datatype module-desc
   X : symbol;
@@ -23,6 +23,10 @@
   X : symbol;
   ================================
   [load-fn : X] : module-desc-item;
+
+  X : symbol;
+  ================================
+  [unload-fn : X] : module-desc-item;
 
   X : symbol;
   ================================
@@ -88,7 +92,7 @@
 
 (set *loaded-modules* [])
 (set *modules* [])
-(set *modules-paths* ["root/"])
+(set *modules-paths* [])
 
 (define module-loaded?
   {symbol --> boolean}
@@ -118,6 +122,7 @@
   _ [] -> null
   name [[name : F] | _] -> F
   load-fn [[load-fn : F] | _] -> F
+  unload-fn [[unload-fn : F] | _] -> F
   dump-fn [[dump-fn : F] | _] -> F
   T [_ | R] -> (module-sym T R))
 
@@ -136,8 +141,10 @@
   [Key | Def] -> Key)
 
 (define list-modules
-  {A --> (list symbol)}
-  _ -> (map module-entry-key (value *modules*)))
+  {symbol --> (list symbol)}
+  loaded -> (value *loaded-modules*)
+  all -> (map module-entry-key (value *modules*))
+  _ -> (error "(list-modules loaded) or (list-modules all)~%"))
 
 (define find-module-aux
   {symbol --> (list entry) --> module-desc}
@@ -293,8 +300,7 @@
 (define dump-module-files
   {symbol --> symbol --> string --> (list string) --> boolean}
   Lang Impl Dir [] -> true
-  Lang Impl Dir [F | Files] -> (do (load F)
-                                   (dump-native Lang Impl Dir F)
+  Lang Impl Dir [F | Files] -> (do (dump-native Lang Impl Dir F)
                                    (dump-module-files Lang Impl Dir Files)))
 
 (define dump***
@@ -323,11 +329,28 @@
 
 (define dump-module
   {symbol --> symbol --> symbol --> string --> boolean}
-  M Lang Impl Dir -> (walk-tree [M] (dump* Lang Impl Dir)))
+  M Lang Impl Dir -> (walk-tree [M] (dump* Lang Impl Dir))
+                     where (element? M (value *loaded-modules*))
+  M _ _ _ -> (error "Dump error: module ~S is not loaded.~%" M))
+
+(define forget-module*
+  {symbol --> symbol --> boolean}
+  M [] _ -> true
+  M _ null -> true
+  M Desc F -> (in-directory (module-str path Desc)
+                            ((module-load-fn F))
+                            (/. E (error (error-to-string E)))))
 
 (define forget-module
-  {symbol --> boolean --> boolean}
-  M true -> (do (forget-module-manifest M (value *modules*) [])
-                (forget-module M false))
-  M false -> (set *loaded-modules* (remove M (value *loaded-modules*))))
+  {symbol --> boolean}
+  M -> (let D (find-module M)
+            F (module-sym unload-fn D)
+            L (set *loaded-modules* (remove M (value *loaded-modules*)))
+            R (forget-module-manifest M (value *modules*) [])
+         (forget-module* M D F)))
+
+(define reload-module
+  {symbol --> boolean}
+  M -> (do (forget-module M)
+           (use-modules [M])))
 )
