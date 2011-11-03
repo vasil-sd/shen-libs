@@ -1,7 +1,8 @@
 (package module-
          [name depends load load-fn unload-fn dump dump-fn path loaded all
           *modules-paths* find-module use-modules dump-module register-module
-          reload-module list-modules load-native dump-native]
+          reload-module list-modules load-native dump-native
+          module-sym module-str module-load-fn module-dump-fn]
 
 (synonyms load-fn (string --> boolean)
           dump-fn (symbol --> (symbol --> (string --> boolean)))
@@ -320,9 +321,13 @@
 
 (define dump-module-files
   {symbol --> symbol --> string --> (list string) --> boolean}
-  Lang Impl Dir [] -> true
-  Lang Impl Dir [F | Files] -> (do (dump-native Lang Impl Dir F)
-                                   (dump-module-files Lang Impl Dir Files)))
+  L Im D [] -> true
+  L Im D [F | Files] -> (do (let F' (cn (value *home-directory*) F)
+                              (in-directory
+                                ""
+                                (/. _ (dump-native L Im D F'))
+                                (/. E (error (error-to-string E)))))
+                            (dump-module-files L Im D Files)))
 
 (define dump***
   {symbol --> symbol --> string --> symbol --> dump-fn --> (list string)
@@ -350,7 +355,8 @@
 
 (define dump-module
   {symbol --> symbol --> symbol --> string --> boolean}
-  M Lang Impl Dir -> (walk-tree [M] (dump* Lang Impl Dir))
+  M Lang Impl Dir -> (let Dir' (cn (value *home-directory*) Dir)
+                       (walk-tree [M] (dump* Lang Impl Dir')))
                      where (module-loaded? M)
   M _ _ _ -> (error "Dump error: module ~S is not loaded.~%" M))
 
@@ -375,5 +381,4 @@
 (define reload-module
   {symbol --> boolean}
   M -> (do (forget-module M)
-           (use-modules [M])))
-)
+           (use-modules [M]))))
