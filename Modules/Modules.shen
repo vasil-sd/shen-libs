@@ -205,9 +205,6 @@
 (define register-module
   {module-desc --> symbol}
   [] -> (error "Wrong module definition.~%")
-  Def -> (error "Module load files or load-fn method is not defined.~%")
-         where (and (empty? (module-str-list load Def))
-                    (= (module-load-fn load-fn Def) null-load-fn))
   Def -> (add-module! (module-sym name Def) Def))
 
 (define module-known?
