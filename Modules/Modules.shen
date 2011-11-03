@@ -228,24 +228,25 @@
 (define manifest-exists?
   {symbol --> string --> boolean}
   M P -> (in-directory (cn P (str M))
-                       (/. P (let P (open file (cn (str M) ".shen") in)
+                       (/. _ (let P (open file "module.shen" in)
                                   R (close P)
                                 true))
                        (/. E false)))
 
-(define load-manifest*
+(define load-manifest-file
   {symbol --> string --> boolean}
-  M D -> false where (not (manifest-exists? M D))
-  M D -> (in-directory (cn D (str M))
-                       (/. P (do (load (cn (str M) ".shen"))
+  M P -> false where (not (manifest-exists? M P))
+  M P -> (in-directory (cn P (str M))
+                       (/. _ (do (load "module.shen")
                                  (module-known? M)))
-                       (/. E (error "~A/~A.shen: ~S"
-                                        D M (error-to-string E)))))
+                       (/. E (error "~A/module.shen: ~S"
+                                    P
+                                    (error-to-string E)))))
 
 (define load-manifest
   {symbol --> (list string) --> boolean}
   M [] -> false
-  M [P | Path] <- (fail-if (/. X (not X)) (load-manifest* M P))
+  M [P | Path] <- (fail-if (/. X (not X)) (load-manifest-file M P))
   M [P | Path] -> (load-manifest M Path))
 
 (define resolve-deps-aux*
@@ -326,7 +327,6 @@
   Lang Impl Dir [F | Files] -> (do (dump-native Lang Impl Dir F)
                                    (dump-module-files Lang Impl Dir Files)))
 
-\*
 (define dump***
   {symbol --> symbol --> string --> symbol --> dump-fn --> (list string)
    --> (list string) --> boolean}
