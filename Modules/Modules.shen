@@ -1,12 +1,11 @@
 (package module-
          [name depends load load-fn unload-fn dump dump-fn path loaded all
           *modules-paths* find-module use-modules dump-module register-module
-          reload-module list-modules load-native dump-native
-          module-sym module-str module-load-fn module-dump-fn]
+          reload-module list-modules load-native dump-native module-str-list
+          module-sym module-str module-load-fn module-dump-fn module-deps]
 
 (synonyms load-fn (string --> boolean)
-          dump-fn (symbol --> (symbol --> (string --> boolean)))
-          exception error)
+          dump-fn (symbol --> (symbol --> (string --> boolean))))
 
 (datatype module-desc
   X : symbol;
