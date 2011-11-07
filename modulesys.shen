@@ -1,3 +1,54 @@
+\* Copyright 2010-2011 Ramil Farkhshatov
+
+defstruct is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+defstruct is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with defstruct.  If not, see <http://www.gnu.org/licenses/>.
+
+## Description
+
+Module system is a convenient tool for managing libraries.
+
+## Usage syntax
+
+* `(use-modules [mod1 mod2 ...])` 
+loads given modules with all their dependencies. Any module already loaded
+won't be loaded twice.
+
+* `(reload-module mod1)`
+reloads given module.
+
+* `(list-modules all)`
+returns a list of known modules.
+
+* `(list-modules loaded)`
+returns a list of loaded modules.
+
+* `(dump-module mod language implementation target-dir)`
+dumps module `mod` and its dependencies to given implementation of given
+language to supplied directory.
+
+* `(set *modules-paths* [dir1 dir2])`
+sets list of directories where modules are searched.
+
+## Module definition
+
+Sample contents of `mod1/module.shen` where `mod1` is module name:
+
+  (register-module [[name: mod1]
+                    [load: "file1" "file2"]
+                    [depends: mod3 mod4]])
+
+*\
+
 (package module-
          [name depends load load-fn unload-fn dump dump-fn path loaded all
           *modules-paths* find-module use-modules dump-module register-module
