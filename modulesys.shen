@@ -19,15 +19,15 @@ Module system is a convenient tool for managing libraries.
 
 ## Usage syntax
 
-* `(use-modules [mod1 mod2 ...])` 
+* `(use-modules [mod1 mod2 ...])`
 loads given modules with all their dependencies. Any module already loaded
 won't be loaded twice.
 
 * `(reload-module mod1)`
 reloads given module.
 
-* `(list-modules all)`
-returns a list of known modules.
+* `(list-modules registered)`
+returns a list of registered modules.
 
 * `(list-modules loaded)`
 returns a list of loaded modules.
@@ -50,10 +50,11 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 *\
 
 (package module-
-         [name depends load load-fn unload-fn dump dump-fn path loaded all
-          *modules-paths* find-module use-modules dump-module register-module
-          reload-module list-modules load-native dump-native module-str-list
-          module-sym module-str module-load-fn module-dump-fn module-deps]
+         [name depends load load-fn unload-fn dump dump-fn path loaded
+          registered *modules-paths* find-module use-modules dump-module
+          register-module reload-module list-modules load-native dump-native
+          module-str-list module-sym module-str module-load-fn module-dump-fn
+          module-deps]
 
 (synonyms load-fn (string --> boolean)
           dump-fn (symbol --> (symbol --> (string --> boolean))))
@@ -221,8 +222,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (define list-modules
   {symbol --> (list symbol)}
   loaded -> (value *loaded-modules*)
-  all -> (map module-entry-key (value *modules*))
-  _ -> (error "(list-modules loaded) or (list-modules all)~%"))
+  registered -> (map module-entry-key (value *modules*))
+  _ -> (error "(list-modules loaded) or (list-modules registered)~%"))
 
 (define find-module-aux
   {symbol --> (list entry) --> module-desc}
