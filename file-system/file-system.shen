@@ -139,4 +139,25 @@ The following functions are provided.
               ((= "Common Lisp" (value *language*))
                (trap-error (RENAME-FILE From To) (/. E false)))))
 
+(define read-string
+  {(stream in)--> string}
+  Stream -> (let Byte (read-byte Stream)
+  	      (if (or (= Byte -1) (= Byte 10))
+  		  ""
+  		  (cn (n->string Byte) (read-string-from-file Stream)))))
+
+\* read list of strings from stream *\
+(define read-strings-from-stream
+  {(stream in) --> (list string)}
+  Stream -> (let Str (read-string-from-file Stream)
+	      (if (= Str "") 
+		  []
+		  [ Str | (read-text-stream Stream) ])))
+
+\* read list of strings from file *\
+(define read-text-file
+  {string --> (list string)}
+  Path -> (read-strings-from-stream (open file Path in)))
+
+
 )
