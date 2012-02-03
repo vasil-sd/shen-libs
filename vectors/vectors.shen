@@ -32,47 +32,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 This library implements a number of vector utilities 
 
 *** Code: *\
-(datatype positive
-  if (and (number? X) (> X 0) )
-  ____________
-  X: positive;
-
-  X: number >> P;
-  _______________
-  X: positive >> P;
-  _______________________________________
-  +: (positive --> positive --> positive);
-)
-
-(datatype integer
-  if (integer? X)
-  ___________________________________
-  X: integer;
-
-  X: number >> P;
-  _______________
-  X: integer >> P;
-)
-
-(datatype index
-  X: positive;
-  X: integer;
-  ============
-  X: index;
-)
 
 (package vectors- [vector-ref list->vector vector->list]
 
 \*---------------------------------------------------------------------------------*\
 (define vector-ref
 \* returns n'th element of the vector and throws exception if (n > length) of list *\
-  {(vector A) --> index --> A}
+  {(vector A) --> number --> A}
   V N -> (<-vector V N) where (>= (limit V) N)
   _ _ -> (error "Out of bounds exception"))
 
 \*---------------------------------------------------------------------------------*\
 (define list-vect-help
-  {(list A) --> (vector A) --> index --> (vector A)}
+  {(list A) --> (vector A) --> number --> (vector A)}
   []    V _    -> V
   [A|B] V N -> (list-vect-help B (vector-> V N A) (+ N 1)))
 
@@ -82,15 +54,14 @@ This library implements a number of vector utilities
   L -> (list-vect-help L (vector (length L)) 1))
 
 \*---------------------------------------------------------------------------------*\
-(define vect-list-help
-  {(vector A) --> (list A) --> (list A)}
-  <> L -> L
-  (@v A B) [] -> (vect-list-help B [A])
-  (@v A B) L  -> (vect-list-help B (append L [A])))
+(define vector->list-help
+  {(vector A) --> number --> number --> (list A) --> (list A)}
+  _ End End Acc -> (reverse Acc)
+  V I End Acc -> (vector->list-help V (+ I 1) End [(<-vector V I) | Acc]))
 
 (define vector->list
-\* makes list->vector conversion *\
+  \* makes list->vector conversion *\
   {(vector A) --> (list A)}
-  V -> (vect-list-help V []))
+  V -> (vector->list-help V 1 (+ 1 (limit V)) []))
 
 )
