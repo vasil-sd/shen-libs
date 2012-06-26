@@ -52,12 +52,14 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (package module-
          [name depends load load-fn unload-fn dump dump-fn path loaded
           registered *modules-paths* find-module use-modules dump-module
-          register-module reload-module list-modules load-native dump-native
+          register-module reload-module list-modules dump-native
           module-str-list module-sym module-str module-load-fn module-dump-fn
-          module-deps]
+          module-deps module-dump-deps register-dumper all]
 
 (synonyms load-fn (string --> boolean)
-          dump-fn (symbol --> (symbol --> (string --> boolean))))
+          dump-fn (symbol --> (symbol --> (string --> boolean)))
+          native-dump-fn (string --> (string --> boolean))
+          dep-fn (module-desc --> (list symbol)))
 
 (datatype module-desc
   X : symbol;
@@ -67,6 +69,10 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   X : (list symbol);
   ===================================
   [depends : | X] : module-desc-item;
+
+  X : (list symbol);
+  ===================================
+  [dump-depends : | X] : module-desc-item;
 
   X : (list string);
   =============================
@@ -100,7 +106,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   ______________________________________
   [dump-fn : X] : module-desc-item >> P;
 
-  if (not (element? X [name depends load dump load-fn unload-fn dump-fn]))
+  if (not (element? X [name dump-depends depends load dump load-fn unload-fn
+                       dump-fn]))
   X : symbol; Y : string;
   ===========================
   [X : Y] : module-desc-item;
@@ -155,12 +162,27 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   (set *modules-paths* X) : (list string);
 
   __________________________________
-  (value *home-directory*) : string;
-  )
+  (value *home-directory*) : string;)
+
+(datatype native-types
+  __________________
+  [] : dumper-entry;
+
+  I : symbol; L : symbol; F : native-dump-fn;
+  ===========================================
+  [I L | F] : dumper-entry;
+
+  ________________________________________
+  (value *dumpers*) : (list dumper-entry);
+
+  X : (list dumper-entry);
+  _______________________________________
+  (set *dumpers* X) : (list dumper-entry);)
 
 (set *loaded-modules* [])
 (set *modules* [])
 (set *modules-paths* [])
+(set *dumpers* [])
 
 (define module-loaded?
   {symbol --> boolean}
@@ -171,6 +193,19 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   [] -> []
   [[depends : | M] | R] -> M
   [_ | R] -> (module-deps R))
+
+(define module-dump-deps*
+  {module-desc --> (list symbol)}
+  [] -> []
+  [[dump-depends : | M] | R] -> M
+  [_ | R] -> (module-dump-deps* R))
+
+(define module-dump-deps
+  {module-desc --> (list symbol)}
+  X -> (let D (module-dump-deps* X)
+         (if (empty? D)
+             (module-deps X)
+             D)))
 
 (define module-str-list
   {symbol --> module-desc --> (list string)}
@@ -209,9 +244,9 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   _ _ _ -> false)
 
 (define module-dump-fn
- {symbol --> (module-desc --> dump-fn)}
+ {symbol --> module-desc --> dump-fn}
   _ [] -> null-dump-fn
-  dump-fn [[dump-fn : F] | _] -> F where (= (arity F) 4)
+  dump-fn [[dump-fn : F] | _] -> F where (= (arity F) 3)
   dump-fn [[dump-fn : F] | _] -> (error "Wrong dump function ~S.~%" F)
   T [_ | R] -> (module-dump-fn T R))
 
@@ -299,23 +334,23 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   M [P | Path] -> (load-manifest M Path))
 
 (define resolve-deps-aux*
-  {(list symbol) --> symbol --> module-desc --> (list symbol)
+  {dep-fn --> (list symbol) --> symbol --> module-desc --> (list symbol)
    --> (list symbol)}
-  Acc M [] Deps -> (if (load-manifest M (value *modules-paths*))
-                       (resolve-deps-aux* Acc M (find-module M) Deps)
-                       (error "Unable to find module ~S~%" M))
-  Acc M Desc Deps -> (let D (module-deps Desc)
-                       (resolve-deps-aux [M | Acc] (append Deps D))))
+  F Acc M [] Deps -> (if (load-manifest M (value *modules-paths*))
+                         (resolve-deps-aux* F Acc M (find-module M) Deps)
+                         (error "Unable to find module ~S~%" M))
+  F Acc M Desc Deps -> (let D (F Desc)
+                         (resolve-deps-aux F [M | Acc] (append Deps D))))
 
 (define resolve-deps-aux
-  {(list symbol) --> (list symbol) --> (list symbol)}
-  Acc [] -> Acc
-  Acc [D | Deps] -> (resolve-deps-aux [D | Acc] Deps) where (element? D Acc)
-  Acc [D | Deps] -> (resolve-deps-aux* Acc D (find-module D) Deps))
+  {dep-fn --> (list symbol) --> (list symbol) --> (list symbol)}
+  F Acc [] -> Acc
+  F Acc [D | R] -> (resolve-deps-aux F [D | Acc] R) where (element? D Acc)
+  F Acc [D | R] -> (resolve-deps-aux* F Acc D (find-module D) R))
 
 (define resolve-deps
-  {(list symbol) --> (list symbol)}
-  Deps -> (resolve-deps-aux [] Deps))
+  {dep-fn --> (list symbol) --> (list symbol)}
+  F Deps -> (resolve-deps-aux F [] Deps))
 
 (define walk-tree*
   {(list symbol) --> (symbol --> boolean) --> (list symbol) --> boolean
@@ -326,13 +361,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   [M | Mods] Fn Acc Res -> (walk-tree* Mods Fn [M | Acc] (Fn M)))
 
 (define walk-tree
-  {(list symbol) --> (symbol --> boolean) --> boolean}
-  Mods Fn -> (walk-tree* (resolve-deps Mods) Fn [] true))
-
-(define load-native
-  {string --> boolean}
-  S -> (error "No native loader is defined yet.")
-  _ -> false)
+  {dep-fn --> (list symbol) --> (symbol --> boolean) --> boolean}
+  F Mods Fn -> (walk-tree* (resolve-deps F Mods) Fn [] true))
 
 (define load-module-files
   {(list string) --> boolean}
@@ -342,7 +372,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 
 (define load-module*
   {symbol --> load-fn --> (list string) --> boolean}
-  _ null-load-fn [] -> false
+  _ null-load-fn [] -> true
   M null-load-fn Files -> (load-module-files Files)
   M Fn _ -> (Fn (value *home-directory*)))
 
@@ -363,12 +393,28 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 
 (define use-modules
   {(list symbol) --> boolean}
-  M -> (walk-tree M (/. X (load-module X (find-module X)))))
+  M -> (let F (function module-deps)
+         (walk-tree F M (/. X (load-module X (find-module X))))))
+
+(define null-native-dump-fn
+  {string --> string --> boolean}
+  _ _ -> false)
+
+(define find-dumper
+  {symbol --> symbol --> (list dumper-entry) --> native-dump-fn}
+  Lang Impl [] -> null-native-dump-fn
+  Lang Impl [[Lang Impl | F] | Dumpers] -> F
+  Lang Impl [_ | Dumpers] -> (find-dumper Lang Impl Dumpers))
 
 (define dump-native
   {symbol --> symbol --> string --> string --> boolean}
-  Lang Impl Dir F -> (error "No native loader is defined yet.")
-  _ _ _ _ -> false)
+  Lang Impl Dir F <- (let D1 (find-dumper Lang all (value *dumpers*))
+                          D2 (find-dumper Lang Impl (value *dumpers*))
+                       (if (= D2 null-native-dump-fn)
+                           (if (= D1 null-native-dump-fn)
+                               (error "No appropriate native loader found.")
+                               (D1 Dir F))
+                           (D2 Dir F))))
 
 (define dump-module-files
   {symbol --> symbol --> string --> (list string) --> boolean}
@@ -407,7 +453,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (define dump-module
   {symbol --> symbol --> symbol --> string --> boolean}
   M Lang Impl Dir -> (let Dir' (cn (value *home-directory*) Dir)
-                       (walk-tree [M] (dump* Lang Impl Dir')))
+                          D (function module-dump-deps)
+                       (walk-tree D [M] (dump* Lang Impl Dir')))
                      where (module-loaded? M)
   M _ _ _ -> (error "Dump error: module ~S is not loaded.~%" M))
 
@@ -432,4 +479,16 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (define reload-module
   {symbol --> boolean}
   M -> (do (forget-module M)
-           (use-modules [M]))))
+           (use-modules [M])))
+
+(define register-dumper*
+  {symbol --> symbol --> native-dump-fn --> (list dumper-entry)
+   --> (list dumper-entry) --> (list dumper-entry)}
+  L Impl Fn [] Acc -> (set *dumpers* [[L Impl | Fn] | Acc])
+  L Impl Fn [[L Impl | _] | R] Acc -> (register-dumper* L Impl Fn R Acc)
+  L Impl Fn [X | R] Acc -> (register-dumper* L Impl Fn R [X | Acc]))
+
+(define register-dumper
+  {symbol --> symbol --> native-dump-fn --> boolean}
+  L Impl Fn -> (do (register-dumper* L Impl Fn (value *dumpers*) [])
+                   true)))
