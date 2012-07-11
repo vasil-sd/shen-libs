@@ -423,7 +423,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
                             (dump-module-files L Im S D Files)))
 
 (define dump***
-  {symbol --> symbol --> string --> string --> symbol --> dump-fn 
+  {symbol --> symbol --> string --> string --> symbol --> dump-fn
    --> (list string) --> (list string) --> boolean}
   _ _ _ _ _ null-dump-fn [] [] -> false
   Ln Im Src Dst M Fn _ _ -> (Fn Ln Im Src Dst) where (not (= Fn null-dump-fn))
