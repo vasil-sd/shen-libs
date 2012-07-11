@@ -57,8 +57,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
           module-deps module-dump-deps register-dumper all]
 
 (synonyms load-fn (string --> boolean)
-          dump-fn (symbol --> (symbol --> (string --> boolean)))
-          native-dump-fn (string --> (string --> boolean))
+          dump-fn (symbol --> (symbol --> (string --> (string --> boolean))))
+          native-dump-fn (string --> (string --> (string --> boolean)))
           dep-fn (module-desc --> (list symbol)))
 
 (datatype module-desc
@@ -240,13 +240,13 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   T [_ | R] -> (module-load-fn T R))
 
 (define null-dump-fn
-  {symbol --> symbol --> string --> boolean}
-  _ _ _ -> false)
+  {symbol --> symbol --> string --> string --> boolean}
+  _ _ _ _ -> false)
 
 (define module-dump-fn
  {symbol --> module-desc --> dump-fn}
   _ [] -> null-dump-fn
-  dump-fn [[dump-fn : F] | _] -> F where (= (arity F) 3)
+  dump-fn [[dump-fn : F] | _] -> F where (= (arity F) 4)
   dump-fn [[dump-fn : F] | _] -> (error "Wrong dump function ~S.~%" F)
   T [_ | R] -> (module-dump-fn T R))
 
@@ -397,8 +397,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
          (walk-tree F M (/. X (load-module X (find-module X))))))
 
 (define null-native-dump-fn
-  {string --> string --> boolean}
-  _ _ -> false)
+  {string --> string --> string --> boolean}
+  _ _ _ -> false)
 
 (define find-dumper
   {symbol --> symbol --> (list dumper-entry) --> native-dump-fn}
@@ -407,44 +407,37 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   Lang Impl [_ | Dumpers] -> (find-dumper Lang Impl Dumpers))
 
 (define dump-native
-  {symbol --> symbol --> string --> string --> boolean}
-  Lang Impl Dir F <- (let D1 (find-dumper Lang all (value *dumpers*))
-                          D2 (find-dumper Lang Impl (value *dumpers*))
+  {symbol --> symbol --> string --> string --> string --> boolean}
+  Ln Im Src Dst F <- (let D1 (find-dumper Ln all (value *dumpers*))
+                          D2 (find-dumper Ln Im (value *dumpers*))
                        (if (= D2 null-native-dump-fn)
                            (if (= D1 null-native-dump-fn)
                                (error "No appropriate native loader found.")
-                               (D1 Dir F))
-                           (D2 Dir F))))
+                               (D1 Src F Dst))
+                           (D2 Src F Dst))))
 
 (define dump-module-files
-  {symbol --> symbol --> string --> (list string) --> boolean}
-  L Im D [] -> true
-  L Im D [F | Files] -> (do (let F' (cn (value *home-directory*) F)
-                              (in-directory
-                                ""
-                                (/. _ (dump-native L Im D F'))
-                                (/. E (error (error-to-string E)))))
-                            (dump-module-files L Im D Files)))
+  {symbol --> symbol --> string --> string --> (list string) --> boolean}
+  L Im S D [] -> true
+  L Im S D [F | Files] -> (let T1 (dump-native L Im S D F)
+                            (dump-module-files L Im S D Files)))
 
 (define dump***
-  {symbol --> symbol --> string --> symbol --> dump-fn --> (list string)
-   --> (list string) --> boolean}
-  _ _ _ _ null-dump-fn [] [] -> false
-  Lang Impl Dir M Fn _ _ -> (Fn Lang Impl Dir)
-                            where (not (= Fn null-dump-fn))
-  Lang Impl Dir M _ [] L-files -> (dump-module-files Lang Impl Dir L-files)
-  Lang Impl Dir M _ D-files _ -> (dump-module-files Lang Impl Dir D-files))
+  {symbol --> symbol --> string --> string --> symbol --> dump-fn 
+   --> (list string) --> (list string) --> boolean}
+  _ _ _ _ _ null-dump-fn [] [] -> false
+  Ln Im Src Dst M Fn _ _ -> (Fn Ln Im Src Dst) where (not (= Fn null-dump-fn))
+  Ln Im Src Dst M _ [] L-files -> (dump-module-files Ln Im Src Dst L-files)
+  Ln Im Src Dst M _ D-files _ -> (dump-module-files Ln Im Src Dst D-files))
 
 (define dump**
   {symbol --> symbol --> string --> symbol --> module-desc --> boolean}
   _ _ _ _ [] -> false
   Lang Impl Dir M Desc -> (let F (module-dump-fn dump-fn Desc)
+                               Src (module-str path Desc)
                                D (module-str-list dump Desc)
                                L (module-str-list load Desc)
-                            (in-directory
-                              (module-str path Desc)
-                              (/. _ (dump*** Lang Impl Dir M F D L))
-                              (/. E (error (error-to-string E))))))
+                            (dump*** Lang Impl Src Dir M F D L)))
 
 (define dump*
   {symbol --> symbol --> string --> symbol --> boolean}
