@@ -333,24 +333,19 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   M [P | Path] <- (fail-if (/. X (not X)) (load-manifest-file M P))
   M [P | Path] -> (load-manifest M Path))
 
-(define resolve-deps-aux*
-  {dep-fn --> (list symbol) --> symbol --> module-desc --> (list symbol)
-   --> (list symbol)}
-  F Acc M [] Deps -> (if (load-manifest M (value *modules-paths*))
-                         (resolve-deps-aux* F Acc M (find-module M) Deps)
-                         (error "Unable to find module ~S~%" M))
-  F Acc M Desc Deps -> (let D (F Desc)
-                         (resolve-deps-aux F [M | Acc] (append Deps D))))
-
 (define resolve-deps-aux
   {dep-fn --> (list symbol) --> (list symbol) --> (list symbol)}
-  F Acc [] -> Acc
-  F Acc [D | R] -> (resolve-deps-aux F [D | Acc] R) where (element? D Acc)
-  F Acc [D | R] -> (resolve-deps-aux* F Acc D (find-module D) R))
+  _ [] Acc -> Acc
+  F [M | R] Acc -> (resolve-deps-aux F R Acc) where (element? M Acc)
+  F [M | R] Acc -> (if (load-manifest M (value *modules-paths*))
+                       (let Deps (F (find-module M))
+                            Acc (resolve-deps-aux F Deps Acc)
+                         (resolve-deps-aux F R [M | Acc]))
+                       (error "Unable to find module ~S~%" M)))
 
 (define resolve-deps
   {dep-fn --> (list symbol) --> (list symbol)}
-  F Deps -> (resolve-deps-aux F [] Deps))
+  F Deps -> (reverse (resolve-deps-aux F Deps [])))
 
 (define walk-tree*
   {(list symbol) --> (symbol --> boolean) --> (list symbol) --> boolean
@@ -393,8 +388,8 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 
 (define use-modules
   {(list symbol) --> boolean}
-  M -> (let F (function module-deps)
-         (walk-tree F M (/. X (load-module X (find-module X))))))
+  M -> (let L (/. X (load-module X (find-module X)))
+         (walk-tree (function module-deps) M L)))
 
 (define null-native-dump-fn
   {string --> string --> string --> boolean}
