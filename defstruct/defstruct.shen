@@ -45,7 +45,7 @@ accessors:
 
 *\
 
-(package defstruct- [defstruct]
+(package defstruct [defstruct]
 
 (datatype struct-type
   X : symbol; Y : symbol;

@@ -49,12 +49,12 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 
 *\
 
-(package module-
+(package module
          [name depends load load-fn unload-fn dump dump-fn path loaded
           registered *modules-paths* find-module use-modules dump-module
           register-module reload-module list-modules dump-native
           module-str-list module-sym module-str module-load-fn module-dump-fn
-          module-deps module-dump-deps register-dumper all]
+          module-deps module-dump-deps register-dumper all in]
 
 (synonyms load-fn (string --> boolean)
           dump-fn (symbol --> (symbol --> (string --> (string --> boolean))))
