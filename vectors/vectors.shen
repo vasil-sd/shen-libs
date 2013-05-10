@@ -33,7 +33,7 @@ This library implements a number of vector utilities
 
 *** Code: *\
 
-(package vectors- [vector-ref list->vector vector->list]
+(package vectors [vector-ref list->vector vector->list]
 
 \*---------------------------------------------------------------------------------*\
 (define vector-ref
