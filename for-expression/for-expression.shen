@@ -98,7 +98,19 @@ Local variable
      B <- [a b]
      C = [A B]
      C)
+=> [[1 a] [1 b] [2 a] [2 b]]
 
+
+Example 6:
+==========
+
+Local variable with pattern matching
+
+(for A <- [1 2]
+     B <- [a b]
+     [C D] = [A B]
+     C)
+=> [1 1 2 2]
 
 
 Example 7: 
@@ -111,7 +123,7 @@ Pattern matching.
 => [2 12]
 
 
-Example 9:
+Example 8:
 ==========
 
 Pattern matching with strings.
@@ -144,7 +156,8 @@ and vectors)
                                                                         [(create-for-expression As [RecFunc RecFunc [tail Rest]])])]]
                                              [RecFunc RecFunc Value]])
   where (= Arrow <-)
-  [Var Eq Something | As]     Empty -> [let Var Something (create-for-expression As Empty)]
+  [Matcher Eq Value | As]    Empty -> (append [let] (create-pattern-matching-variables Matcher Value)
+                                              [(create-for-expression As Empty)])
   where (= Eq =)
   [if Test | As]             Empty -> [if Test
                                           (create-for-expression As Empty)
