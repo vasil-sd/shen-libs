@@ -88,7 +88,20 @@ The result is the same.
 
 
 
-Example 6: 
+
+Example 6:
+==========
+
+Local variable
+
+(for A <- [1 2]
+     B <- [a b]
+     C = [A B]
+     C)
+
+
+
+Example 7: 
 ==========
 
 Pattern matching.
@@ -98,7 +111,7 @@ Pattern matching.
 => [2 12]
 
 
-Example 7:
+Example 9:
 ==========
 
 Pattern matching with strings.
@@ -131,6 +144,8 @@ and vectors)
                                                                         [(create-for-expression As [RecFunc RecFunc [tail Rest]])])]]
                                              [RecFunc RecFunc Value]])
   where (= Arrow <-)
+  [Var Eq Something | As]     Empty -> [let Var Something (create-for-expression As Empty)]
+  where (= Eq =)
   [if Test | As]             Empty -> [if Test
                                           (create-for-expression As Empty)
                                           Empty]
@@ -142,4 +157,3 @@ and vectors)
   [for | Rest] -> (create-for-expression Rest []))
 
 )
-
