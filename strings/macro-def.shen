@@ -28,27 +28,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			  [let Var Z | (subst [snd Var] Y (subst [fst Var] X W))]))
 
 (defmacro max-macro
-   [max M N ] -> [aux-max' M N]
-   [max | Ns] -> [aux-maxL (cf Ns)])
+   [max M N ] -> [aux.max' M N]
+   [max | Ns] -> [aux.maxL (cf Ns)])
   
 (defmacro min-macro
-   [min M N ] -> [aux-min' M N]
-   [min | Ns] -> [aux-minL (cf Ns)])
+   [min M N ] -> [aux.min' M N]
+   [min | Ns] -> [aux.minL (cf Ns)])
 
 (defmacro gcd-macro
-   [gcd M N ] -> [maths-gcd' M N]
-   [gcd | Ns] -> [maths-gcdL (cf Ns)])
+   [gcd M N ] -> [maths.gcd' M N]
+   [gcd | Ns] -> [maths.gcdL (cf Ns)])
 
 (defmacro lcm-macro
-   [lcm | Ns] -> [maths-lcmL (cf Ns)])
+   [lcm | Ns] -> [maths.lcmL (cf Ns)])
    
 (define cf
    [] -> []
    [N | Ns] -> [cons N (cf Ns)]) 
 
 (defmacro round-macro
-   [round N] -> [maths-round0 N]
-   [round N1 N2] -> [maths-round' N1 N2])
+   [round N] -> [maths.round0 N]
+   [round N1 N2] -> [maths.round' N1 N2])
 
 (declare sqrt [number --> number])
 
