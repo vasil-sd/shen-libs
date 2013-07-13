@@ -1,6 +1,7 @@
 (register-module [[name: maths]
                   [author: "Willi O Riha"]
-                  [load-fn: maths-load]])
+                  [load-fn: maths-load]
+                  [dump: "macro-def.shen" "maths-lib.shen"]])
 
 \* load native definitions of math functions for efficiency *\
 (define maths-load-native

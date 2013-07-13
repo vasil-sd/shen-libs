@@ -1,6 +1,7 @@
 (register-module [[name: strings]
                   [author: "Willi O Riha"]
-                  [load-fn: strings-load]])
+                  [load-fn: strings-load]
+                  [dump: "macro-def.shen" "auxiliary.shen" "str-lib.shen"]])
 
 \* load native definitions of string functions for efficiency *\
 (define strings-load-native
