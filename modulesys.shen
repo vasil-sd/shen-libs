@@ -312,7 +312,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (define manifest-exists?
   {symbol --> string --> boolean}
   M P -> (in-directory (cn P (str M))
-                       (/. _ (let P (open file "module.shen" in)
+                       (/. _ (let P (open "module.shen" in)
                                   R (close P)
                                 true))
                        (/. E false)))
