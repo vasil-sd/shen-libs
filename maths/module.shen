@@ -8,14 +8,6 @@
   _ _ -> true)
 
 (define maths-load
-  Dir -> (let Tc (if (value shen.*tc*) + -)
-           (trap-error (do (tc -)
-                           (load "macro-def.shen")
-                           (tc +)
-                           (load "maths-lib.shen")
-                           (maths-load-native (value *language*)
-                                              (value *implementation*))
-                           (tc Tc)
-                           true)
-                       (/. E (do (tc Tc)
-                                 (error (error-to-string E)))))))
+  Dir -> (do (load-with-tc - "macro-def.shen")
+             (load "maths-lib.shen")
+             (maths-load-native (value *language*) (value *implementation*))))

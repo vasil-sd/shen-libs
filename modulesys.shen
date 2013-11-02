@@ -54,7 +54,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
           registered *modules-paths* find-module use-modules dump-module
           register-module reload-module list-modules dump-native
           module-str-list module-sym module-str module-load-fn module-dump-fn
-          module-deps module-dump-deps register-dumper all in]
+          module-deps module-dump-deps register-dumper all in load-with-tc]
 
 (synonyms load-fn (string --> boolean)
           dump-fn (symbol --> (symbol --> (string --> (string --> boolean))))
@@ -479,4 +479,13 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 (define register-dumper
   {symbol --> symbol --> native-dump-fn --> boolean}
   L Impl Fn -> (do (register-dumper* L Impl Fn (value *dumpers*) [])
-                   true)))
+                   true))
+
+(define load-with-tc
+  Tc File -> (let Old-tc (if (tc?) + -)
+                  . (tc Tc)
+                  R (trap-error (load File)
+                                (/. E (do (tc Old-tc)
+                                          (error (error-to-string E)))))
+                  . (tc Old-tc)
+               R)))
