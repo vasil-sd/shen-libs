@@ -1,17 +1,17 @@
 \* Copyright 2010-2011 Ramil Farkhshatov
 
-defstruct is free software: you can redistribute it and/or modify
+modulesys is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-defstruct is distributed in the hope that it will be useful,
+modulesys is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with defstruct.  If not, see <http://www.gnu.org/licenses/>.
+along with modulesys.  If not, see <http://www.gnu.org/licenses/>.
 
 ## Description
 
