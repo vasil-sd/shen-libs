@@ -162,7 +162,13 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
   (set *modules-paths* X) : (list string);
 
   __________________________________
-  (value *home-directory*) : string;)
+  (value *home-directory*) : string;
+
+  ____________________________
+  (value *language*) : string;
+
+  __________________________________
+  (value *implementation*) : string;)
 
 (datatype native-types
   __________________
@@ -403,7 +409,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
 
 (define dump-native
   {symbol --> symbol --> string --> string --> string --> boolean}
-  Ln Im Src Dst F <- (let D1 (find-dumper Ln all (value *dumpers*))
+  Ln Im Src Dst F -> (let D1 (find-dumper Ln all (value *dumpers*))
                           D2 (find-dumper Ln Im (value *dumpers*))
                        (if (= D2 null-native-dump-fn)
                            (if (= D1 null-native-dump-fn)
@@ -482,6 +488,7 @@ Sample contents of `mod1/module.shen` where `mod1` is module name:
                    true))
 
 (define load-with-tc
+  {symbol --> string --> symbol}
   Tc File -> (let Old-tc (if (tc?) + -)
                   . (tc Tc)
                   R (trap-error (load File)
