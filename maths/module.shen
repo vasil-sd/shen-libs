@@ -5,9 +5,11 @@
 
 \* load native definitions of math functions for efficiency *\
 (define maths-load-native
+  {string --> string --> boolean}
   _ _ -> true)
 
 (define maths-load
+  {string --> boolean}
   Dir -> (do (load-with-tc - "macro-def.shen")
              (load "maths-lib.shen")
              (maths-load-native (value *language*) (value *implementation*))))
