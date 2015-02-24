@@ -36,6 +36,15 @@
                        . (thaw Finally)
                     R))
 
+(define str-from-sexpr
+  How X -> (let M (value *maximum-print-sequence-size*)
+                . (set *maximum-print-sequence-size* -1)
+                S (trap-error (make-string How X)
+                              (/. E (do (set *maximum-print-sequence-size* M)
+                                        (error (error-to-string E)))))
+                . (set *maximum-print-sequence-size* M)
+             S))
+
 (define with-file-output
   File Fn -> (let F (open File out)
                (try (freeze (Fn F))
