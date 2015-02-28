@@ -22,8 +22,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *\
 
-(load "ustring.shen")
-
 (package string  [ustring? 
 				  uppercase? lowercase? whitespace? digit? letter?
 				  <ustr >ustr digit-string? substring? 	    
