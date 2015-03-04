@@ -253,6 +253,7 @@
 
 (define forget-module
   {module-id --> boolean}
+  M -> true where (not (element? (normalize-id M) (value *list*)))
   M -> (let M-id (normalize-id M)
             . (call-module-unload M-id)
             . (set *list* (remove M-id (value *list*)))
