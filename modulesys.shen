@@ -107,7 +107,7 @@
   (value *implementation*) : string;
 
   _________________________________
-  (value *modules*) : (list string);
+  (value *list*) : (list string);
 
   _____________________________
   (value *nil-load*) : load-fn;
@@ -162,7 +162,7 @@
   (unput M X D) : string;)
 
 (set *paths* [])
-(set *modules* [])
+(set *list* [])
 (set *db* (vector 256))
 
 (define add-path
@@ -255,7 +255,7 @@
   {module-id --> boolean}
   M -> (let M-id (normalize-id M)
             . (call-module-unload M-id)
-            . (remove M-id (value *modules*))
+            . (set *list* (remove M-id (value *list*)))
          (rm-module-data M-id)))
 
 (define manifest-exists?
@@ -336,7 +336,7 @@
             R (if (= F (value *nil-load*))
                   (load-module-files (get M load (value *db*)))
                   (F))
-            . (set *modules* [M | (value *modules*)])
+            . (set *list* [M | (value *list*)])
          R))
 
 (define load-module
@@ -356,7 +356,7 @@
   Ms -> (let Ms' (map (function normalize-id) Ms)
              Mods (resolve-deps Ms'
                                 (/. M (get M depends (value *db*)))
-                                (/. X (element? X (value *modules*))))
+                                (/. X (element? X (value *list*))))
          (load-modules Mods)))
 
 (define use-modules

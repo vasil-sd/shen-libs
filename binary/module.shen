@@ -1,6 +1,5 @@
-(register-module [[name: binary]
-                  [depends: maths defstruct]
-                  [desc: "Buffer for storing bytevector"]
+(register-module [[depends: "maths" "defstruct"]
+                  [desc: "Binary serialization."]
                   [load-fn: binary.load]
                   [dump: "binary.shen"]])
 

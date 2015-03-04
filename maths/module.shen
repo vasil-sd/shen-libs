@@ -10,6 +10,6 @@
 
 (define maths-load
   {--> boolean}
-  -> (do (load-with-tc - "macro-def.shen")
+  -> (do (load/tc - "macro-def.shen")
          (load "maths-lib.shen")
          (maths-load-native (value *language*) (value *implementation*))))
