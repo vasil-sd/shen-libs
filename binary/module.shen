@@ -1,7 +1,7 @@
 (register-module [[depends: "maths" "defstruct"]
                   [desc: "Binary serialization."]
                   [load-fn: binary.load]
-                  [dump: "binary.shen"]])
+                  [translate: "binary.shen"]])
 
 \* load native definitions of binary functions for efficiency *\
 (define binary.load-native
