@@ -9,7 +9,6 @@
   _ _ -> true)
 
 (define binary.load
-  Dir -> (do (load "binary.shen")
-             (binary.load-native (value *language*)
-                                 (value *implementation*))
-             true))
+  -> (do (load "binary.shen")
+         (binary.load-native (language) (implementation))
+         true))

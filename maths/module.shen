@@ -12,4 +12,4 @@
   {--> boolean}
   -> (do (load/tc - "macro-def.shen")
          (load "maths-lib.shen")
-         (maths-load-native (value *language*) (value *implementation*))))
+         (maths-load-native (language) (implementation))))

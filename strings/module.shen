@@ -8,9 +8,8 @@
   _ _ -> true)
 
 (define strings-load
-  Dir -> (do (load/tc - "macro-def.shen")
-             (load "auxiliary.shen")
-             (load "ustr.shen")
-             (load "str-lib.shen")
-             (strings-load-native (value *language*)
-                                  (value *implementation*))))
+  -> (do (load/tc - "macro-def.shen")
+         (load "auxiliary.shen")
+         (load "ustr.shen")
+         (load "str-lib.shen")
+         (strings-load-native (language) (implementation))))
