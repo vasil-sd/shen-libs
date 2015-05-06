@@ -19,8 +19,8 @@ You may want to store your own libraries in separate directory, e.g.
 Then write into your Shen init file (if you have one):
 
     (load "$shen-libs/modulesys.shen")
-    (module.add "$my-libs")
-    (module.add "$shen-libs")
+    (module.add-path "$my-libs")
+    (module.add-path "$shen-libs")
 
 Where `$shen-libs` is a full path of your `shen-libs` directory and `$my-libs`
 is a full path of your `my-lib`. First line loads module system. Second and
