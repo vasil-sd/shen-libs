@@ -31,9 +31,9 @@
 
 (package module [use-modules load/tc register-module
 
-                 name depends translate-depends depends load translate load-fn
+                 name depends translate-depends load translate load-fn
                  unload-fn translate-fn]
-          
+
 (set *paths* [])
 (set *list* [])
 (set *db* (vector 256))
@@ -54,16 +54,9 @@
   X -> [(normalize-id X)])
 
 (define add-module-field
-  M [load : | X] -> (do (put M load X (value *db*)) true)
-  M [translate : | X] -> (do (put M translate X (value *db*)) true)
-  M [depends : | X] -> (do (put M depends (normalize-ids X) (value *db*))
-                           true)
-  M [translate-depends : | X] -> (do (put M translate-depends
-                                          (normalize-ids X) (value *db*))
-                                true)
-  M [load-fn : X] -> (do (put M load-fn X (value *db*)) true)
-  M [unload-fn : X] -> (do (put M unload-fn X (value *db*)) true)
-  M [translate-fn : X] -> (do (put M translate-fn X (value *db*)) true)
+  M [Field : X] -> (do (put M Field X (value *db*)) true)
+                   where (element? Field [load-fn unload-fn translate-fn])
+  M [Field : | Xs] -> (do (put M Field Xs (value *db*)) true)
   _ _ -> true)
 
 (define nil-load
@@ -173,7 +166,8 @@
   P [D | Ds] Get Pred Acc -> (let Ps [P "." | (value *paths*)]
                                   Dir (load-manifest D Ps)
                                   Acc [D | Acc]
-                               (resolve-deps' Dir (Get D) Get Pred Acc)))
+                                  Acc (resolve-deps' Dir (Get D) Get Pred Acc)
+                               (resolve-deps' P Ds Get Pred Acc)))
 
 (define resolve-deps
   Deps Get Pred -> (resolve-deps' "." Deps Get Pred []))
