@@ -37,6 +37,8 @@
 (set *paths* [])
 (set *list* [])
 (set *db* (vector 256))
+(set *fields* [path load translate depends translate-depends load-fn unload-fn
+               translate-fn])
 
 (define add-path
   X -> (set *paths* [X | (value *paths*)])
@@ -53,11 +55,17 @@
   X -> (map (function normalize-id) X) where (cons? X)
   X -> [(normalize-id X)])
 
+(define add-field
+  M Field Data Db -> (do (put M fields (adjoin Field (get M fields Db)) Db)
+                         (put M Field Data Db)
+                         true))
+
 (define add-module-field
-  M [Field : X] -> (do (put M Field X (value *db*)) true)
+  M [Field : X] -> (add-field M Field X (value *db*))
                    where (element? Field [load-fn unload-fn translate-fn])
-  M [Field : | Xs] -> (do (put M Field Xs (value *db*)) true)
-  _ _ -> true)
+  M [depends : | Xs] -> (add-field M depends (normalize-ids Xs) (value *db*))
+  M [Field : | Xs] -> (add-field M Field Xs (value *db*))
+  _ _ -> false)
 
 (define nil-load
   -> false)
@@ -74,18 +82,16 @@
            (put M load-fn (value *nil-load*) (value *db*))
            (put M unload-fn (value *nil-load*) (value *db*))
            (put M translate-fn (value *nil-translate*) (value *db*))
+           (put M fields (value *fields*) (value *db*))
            true))
 
+(define rm-module-data'
+  [] _ _ -> true
+  [X | Xs] M D -> (do (unput M X D)
+                      (rm-module-data' Xs M)))
+
 (define rm-module-data
-  M -> (do (unput M path (value *db*))
-           (unput M load (value *db*))
-           (unput M translate (value *db*))
-           (unput M depends (value *db*))
-           (unput M translate-depends (value *db*))
-           (unput M load-fn (value *db*))
-           (unput M unload-fn (value *db*))
-           (unput M translate-fn (value *db*))
-           true))
+  M -> (rm-module-data' (get M fields (value *db*)) M (value *db*)))
 
 (define add-module-data
   _ [] -> true
@@ -160,8 +166,6 @@
   {string --> (list string) --> get-deps-fn --> (string --> boolean)
    --> (list string) --> (list string)}
   _ [] _ _ Acc -> Acc
-  P [D | Ds] Get Pred Acc -> (resolve-deps' P Ds Get Pred Acc)
-                             where (element? D Acc)
   P [D | Ds] Get Pred Acc -> (resolve-deps' P Ds Get Pred Acc) where (Pred D)
   P [D | Ds] Get Pred Acc -> (let Ps [P "." | (value *paths*)]
                                   Dir (load-manifest D Ps)
@@ -169,8 +173,16 @@
                                   Acc (resolve-deps' Dir (Get D) Get Pred Acc)
                                (resolve-deps' P Ds Get Pred Acc)))
 
+(define remove-dups'
+  [] Acc -> (reverse Acc)
+  [X | Xs] Acc -> (remove-dups' Xs Acc) where (element? X Acc)
+  [X | Xs] Acc -> (remove-dups' Xs [X | Acc]))
+
+(define remove-dups
+  X -> (remove-dups' X []))
+
 (define resolve-deps
-  Deps Get Pred -> (resolve-deps' "." Deps Get Pred []))
+  Deps Get Pred -> (remove-dups (resolve-deps' "." Deps Get Pred [])))
 
 (define load-module-files
   [] -> true
