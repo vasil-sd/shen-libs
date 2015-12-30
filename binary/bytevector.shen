@@ -7,6 +7,16 @@
 (define bytevector-u8->
   B I X -> (vector-> B (+ I 1) X))
 
+(define bytevector<-list'
+  [] V _ -> V
+  [X | Xs] V I -> (do (bytevector-u8-> V I X)
+                      (bytevector<-list' Xs V (+ I 1))))
+
+(define bytevector<-list
+  List -> (let N (length List)
+               V (bytevector N)
+            (bytevector<-list' List V 0)))
+
 (define bytevector-length
   V -> (limit V))
 
