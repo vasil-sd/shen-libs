@@ -92,7 +92,8 @@
 
 (define put-bytestream'
   [] Stream -> Stream
-  [B | Bs] Stream -> (bytestream-add-block! B Stream))
+  [B | Bs] Stream -> (do (bytestream-add-block! B Stream)
+                         (put-bytestream' Bs Stream)))
 
 (define put-bytestream
   X Stream -> (put-bytestream' (reverse (bytestream-blocks X)) Stream))
