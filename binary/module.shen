@@ -1,14 +1,14 @@
 (register-module [[depends: "maths" "defstruct"]
                   [desc: "Binary serialization."]
                   [load-fn: binary.load]
-                  [translate: "binary.shen"]])
+                  [translate: "math.shen" "bytevector.shen" "binary.shen"]])
 
 \* load native definitions of binary functions for efficiency *\
 (define binary.load-native
-  "Common Lisp" _ -> true
-  _ _ -> true)
+  _ _ -> (do (load "math.shen")
+             (load "bytevector.shen")))
 
 (define binary.load
-  -> (do (load "binary.shen")
-         (binary.load-native (language) (implementation))
+  -> (do (binary.load-native (language) (implementation))
+         (load "stream.shen")
          true))
