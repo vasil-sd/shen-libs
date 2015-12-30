@@ -73,7 +73,7 @@
 (define bytevector-substring->'
   V _ _ _ N N -> V
   V V-off S S-off I N ->
-  (do (bytevector-> V V-off (string->n (pos S S-off)))
+  (do (bytevector-u8-> V V-off (string->n (pos S S-off)))
       (bytevector-substring->' V (+ V-off 1) S (+ S-off 1) (+ I 1) N)))
 
 (define bytevector-substring->
