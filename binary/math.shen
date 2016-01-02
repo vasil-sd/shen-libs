@@ -26,8 +26,13 @@
   \\X -> 8 where (int64? X)
   X -> (error "Integer overflow: ~A > 2**32" X))
 
+(define arithmetic-shift'
+  X 0 -> X
+  X S -> (arithmetic-shift' (* X 2) (- S 1)))
+
 (define arithmetic-shift
-  X S -> (* X (power 2 S)) where (>= S 0)
+  X 0 -> X
+  X S -> (arithmetic-shift-+ X S) where (> S 0)
   X S -> (div X (power 2 (- 0 S))))
 
 (define bitwise-and'
@@ -54,16 +59,16 @@
   X N -> (let Y (power 256 N)
            (div (mod X (* Y 256)) Y)))
 
-(define int#1
+(define int#0
   X -> (mod X 256))
 
-(define int#2
+(define int#1
   X -> (div (mod X 65536) 256))
 
-(define int#3
+(define int#2
   X -> (div (mod X 16777216) 65536))
 
-(define int#4
+(define int#3
   X -> (div (mod X 4294967296) 16777216))
 
 )

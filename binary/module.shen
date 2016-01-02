@@ -5,6 +5,9 @@
 
 \* load native definitions of binary functions for efficiency *\
 (define binary.load-native
+  "Common Lisp" _ -> (do (load "bytevector.shen")
+                         ((protect LOAD) (cn (value *home-directory*)
+                                             "native.lisp")))
   _ _ -> (do (load "math.shen")
              (load "bytevector.shen")))
 

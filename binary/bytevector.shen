@@ -17,6 +17,13 @@
                V (bytevector N)
             (bytevector<-list' List V 0)))
 
+(define list<-bytevector'
+  V N N Acc -> (reverse Acc)
+  V I N Acc -> (list<-bytevector' V (+ I 1) N [(<-bytevector-u8 V I) | Acc]))
+
+(define list<-bytevector
+  V -> (list<-bytevector' V 0 (bytevector-length V) []))
+
 (define bytevector-length
   V -> (limit V))
 
