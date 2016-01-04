@@ -2,6 +2,17 @@
                  bytevector-replace! <-bytevector-u8 bytevector-u8->
                  bytevector-u16le-> bytevector-u32le->]
 
+(define uint8? X -> (<= X 255))
+(define uint16? X -> (<= X 65535))
+(define uint32? X -> (<= X 4294967296))
+(define uint64? X -> (<= X 18446744073709551615))
+
+(define int8? X -> (and (>= X -128) (<= X 127)))
+(define int16? X -> (and (>= X -32768) (<= X 32767)))
+(define int32? X -> (and (>= X -2147483648) (<= X 2147483647)))
+(define int64? X -> (and (>= X -9223372036854775808)
+                         (<= X 9223372036854775807)))
+
 (defstruct bytestream
   (size number)
   (blocks (list bytevector)))

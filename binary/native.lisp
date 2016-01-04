@@ -40,14 +40,14 @@
   (REPLACE Dst Src :START1 Dst-i :END1 (+ Dst-i N) :START2 Src-i))
 
 (DEFUN bytevector-u16le-> (V I X)
-  (SETF (AREF V I) (binary.int#1 X))
-  (SETF (AREF V (+ I 1)) (binary.int#2 X)))
+  (SETF (AREF V I) (binary.int#0 X))
+  (SETF (AREF V (+ I 1)) (binary.int#1 X)))
 
 (DEFUN bytevector-u32le-> (V I X)
-  (SETF (AREF V I) (binary.int#1 X))
-  (SETF (AREF V (+ I 1)) (binary.int#2 X))
-  (SETF (AREF V (+ I 2)) (binary.int#3 X))
-  (SETF (AREF V (+ I 3)) (binary.int#4 X)))
+  (SETF (AREF V I) (binary.int#0 X))
+  (SETF (AREF V (+ I 1)) (binary.int#1 X))
+  (SETF (AREF V (+ I 2)) (binary.int#2 X))
+  (SETF (AREF V (+ I 3)) (binary.int#3 X)))
 
 (DEFUN bytevector<-list (list)
   (LET* ((n (LENGTH list))

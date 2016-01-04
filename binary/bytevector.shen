@@ -55,11 +55,11 @@
                                   Dst Dst-off Src Src-off 0 Len))
 
 (define bytevector-u16le->
-  B I X -> (do (vector-> B (+ I 1) (binary.int#1 X))
-               (vector-> B (+ I 2) (binary.int#2 X))))
+  B I X -> (do (vector-> B (+ I 1) (binary.int#0 X))
+               (vector-> B (+ I 2) (binary.int#1 X))))
 
 (define bytevector-u32le->
-  B I X -> (do (vector-> B (+ I 1) (binary.int#1 X))
-               (vector-> B (+ I 2) (binary.int#2 X))
-               (vector-> B (+ I 3) (binary.int#3 X))
-               (vector-> B (+ I 4) (binary.int#4 X))))
+  B I X -> (do (vector-> B (+ I 1) (binary.int#0 X))
+               (vector-> B (+ I 2) (binary.int#1 X))
+               (vector-> B (+ I 3) (binary.int#2 X))
+               (vector-> B (+ I 4) (binary.int#3 X))))
