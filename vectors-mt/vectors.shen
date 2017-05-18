@@ -200,7 +200,7 @@
 
 (define file->vectornum
   {string --> number --> (vector number)}
-   File N -> (let Stream (open file File in)
+   File N -> (let Stream (open File in)
                  (file->vectornum-help File Stream (read-byte Stream) (vector N) 1 N)))
 
 (define file->vectornum-help

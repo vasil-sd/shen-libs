@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    { A --> A --> boolean }
    X Y -> (not (= X Y)))
  
-(package aux- []
+(package aux []
    
 (define maxL
    { (list number) --> number }

@@ -27,7 +27,7 @@
             X (if (shen.packaged? X)
                   (shen.package-contents X)
                   X)
-         (shen.elim-define (shen.proc-input+ X))))
+         (shen.elim-def (shen.proc-input+ X))))
 
 (define try
   Code Finally -> (let R (trap-error (thaw Code)
@@ -36,15 +36,25 @@
                        . (thaw Finally)
                     R))
 
+(define str-from-sexpr
+  How X -> (let M (value *maximum-print-sequence-size*)
+                . (set *maximum-print-sequence-size* -1)
+                S (trap-error (make-string How X)
+                              (/. E (do (set *maximum-print-sequence-size* M)
+                                        (error (error-to-string E)))))
+                . (set *maximum-print-sequence-size* M)
+             S))
+
 (define with-file-output
-  File Fn -> (let F (open file File out)
+  File Fn -> (let F (open File out)
                (try (freeze (Fn F))
                     (freeze (close F)))))
 
 (define write-file
-  X To -> (let . (with-file-output To (pr (if (string? X)
-                                              X
-                                              (make-string "~A" X))))
+  X To -> (let . (with-file-output To (/. S (pr (if (string? X)
+                                                    X
+                                                    (make-string "~A" X))
+                                                S)))
             true))
 
 (define map-shen

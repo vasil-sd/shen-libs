@@ -28,13 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    (@s _ "") -> true
      _       -> false)
  
-(package string- [whitespace? digit? letter? <ustr >ustr <=ustr >=ustr]
+(package string [whitespace? digit? letter? <ustr >ustr <=ustr >=ustr]
   
    				   \* PREDICATES *\
 (define digit?
    \* returns true iff argument is one of "0", "1",  "9" *\
    { string --> boolean }
-   S -> (inrange? (string->n S) 48 57))
+   S -> (ustring-inrange? (string->n S) 48 57))
    
 (define letter?
    \* returns true iff argument is a letter *\
@@ -44,12 +44,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 (define uppercase?
    \* returns true iff argument is an upper-case letter *\
    { string --> boolean }
-   S -> (inrange?(string->n S) 65 90))
+   S -> (ustring-inrange? (string->n S) 65 90))
 
 (define lowercase?
    \* returns true iff argument is a lower-case letter *\
    { string --> boolean }
-   S -> (inrange?(string->n S) 97 122))
+   S -> (ustring-inrange? (string->n S) 97 122))
 
 (define whitespace?
    \* returns true iff argument is a 'white space' *\

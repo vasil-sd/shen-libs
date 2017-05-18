@@ -156,7 +156,6 @@ accessors:
               | Acc])))
 
 (define constructor-type
-  {symbol --> (list slot) --> ast}
   Type [] Acc -> (reverse [} Type --> | Acc])
   Type [[Sname Stype] | Slots] [] -> (constructor-type Type Slots [Stype {])
   Type [[Sname Stype] | Slots] Acc ->
