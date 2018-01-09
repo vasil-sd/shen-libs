@@ -72,7 +72,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   \* Thanks to vasil from the Qi-lang mailing list for this function definition *\
   [/.* | PatternsActions] ->
   (let TmpName (intern (str (gensym tmpname)))
-       DBody   (tl (tl (compile shen-<define> [ TmpName | PatternsActions])))
+       DBody   (tl (tl (compile (/. X (shen.<define> X)) [ TmpName | PatternsActions])))
     [/. | (append (hd DBody) (tl DBody))]))
 
 \* For extended comments in source code *\
