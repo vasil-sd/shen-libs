@@ -193,7 +193,7 @@
   M -> (let F (get M load-fn (value *db*))
             R (if (= F (value *nil-load*))
                   (load-module-files (get M load (value *db*)))
-                  ((function F)))
+                  ((function F) load))
             . (set *list* [M | (value *list*)])
          R))
 
