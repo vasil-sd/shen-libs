@@ -8,7 +8,8 @@
   _ _ -> true)
 
 (define strings-load
-  -> (do (load/tc - "macro-def.shen")
+  _ -> (do
+         (load/tc - "macro-def.shen")
          (load "auxiliary.shen")
          (load "ustring.shen")
          (load "str-lib.shen")

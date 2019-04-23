@@ -6,5 +6,5 @@
                   [translate: "defstruct.shen"]])
 
 (define defstruct-load
-  {--> boolean}
-  -> (load/tc - "defstruct.shen"))
+  {A --> boolean}
+  _ -> (load/tc - "defstruct.shen"))

@@ -9,7 +9,8 @@
   _ _ -> true)
 
 (define maths-load
-  {--> boolean}
-  -> (do (load/tc - "macro-def.shen")
+  {A --> boolean}
+  _ -> (do
+         (load/tc - "macro-def.shen")
          (load "maths-lib.shen")
          (maths-load-native (language) (implementation))))
