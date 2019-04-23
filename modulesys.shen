@@ -36,7 +36,7 @@
 
 (set *paths* [])
 (set *list* [])
-(set *db* (vector 256))
+(set *db* (trap-error (shen.dict 256) (/. _ (vector 256))))
 (set *fields* [path load translate depends translate-depends load-fn unload-fn
                translate-fn])
 
