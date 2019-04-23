@@ -12,6 +12,7 @@
              (load "bytevector.shen")))
 
 (define binary.load
-  -> (do (binary.load-native (language) (implementation))
+  _ -> (do
+         (binary.load-native (language) (implementation))
          (load "stream.shen")
          true))
