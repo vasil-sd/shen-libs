@@ -110,7 +110,7 @@
   M -> (let F (get M unload-fn (value *db*))
          (if (= F (value *nil-load*))
              true
-             (F))))
+             ((function F) unload))))
 
 (define forget-module
   M -> true where (not (element? (normalize-id M) (value *list*)))
